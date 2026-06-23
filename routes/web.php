@@ -5,6 +5,8 @@ use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\Dev\TestRunnerController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockLedgerController;
@@ -102,4 +104,14 @@ Route::middleware('auth')->group(function () {
 
     Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword'])
         ->name('users.reset-password')->middleware('can:manage-users');
+
+    // Lịch sử hoạt động
+    Route::get('activity-logs', [ActivityLogController::class, 'index'])
+        ->name('activity-logs.index')->middleware('can:view-activity-logs');
+});
+
+// Dev tools — local only
+Route::middleware('App\Http\Middleware\LocalOnly')->prefix('dev')->name('dev.')->group(function () {
+    Route::get('test-runner',      [TestRunnerController::class, 'index'])->name('test-runner');
+    Route::post('test-runner/run', [TestRunnerController::class, 'run'])->name('test-runner.run');
 });

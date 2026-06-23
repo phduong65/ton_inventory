@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreCategoryRequest;
+use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Category;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class CategoryController extends Controller
@@ -21,13 +22,9 @@ class CategoryController extends Controller
         return view('categories.index', compact('categories', 'roots'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreCategoryRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'parent_id' => ['nullable', 'exists:categories,id'],
-            'name'      => ['required', 'string', 'max:100'],
-            'sort'      => ['nullable', 'integer'],
-        ]);
+        $data = $request->validated();
 
         Category::create($data);
 
@@ -36,13 +33,9 @@ class CategoryController extends Controller
         return redirect()->route('categories.index')->with('success', 'Đã thêm ngành hàng.');
     }
 
-    public function update(Request $request, Category $category): RedirectResponse
+    public function update(UpdateCategoryRequest $request, Category $category): RedirectResponse
     {
-        $data = $request->validate([
-            'parent_id' => ['nullable', 'exists:categories,id'],
-            'name'      => ['required', 'string', 'max:100'],
-            'sort'      => ['nullable', 'integer'],
-        ]);
+        $data = $request->validated();
 
         $category->update($data);
 

@@ -197,7 +197,7 @@
         @endcan
 
         {{-- Cài đặt group --}}
-        @can('manage-users')
+        @canany(['manage-users', 'view-activity-logs'])
         <div>
             <button @click="open.caidat = !open.caidat"
                     class="sidebar-nav-item {{ $activeModule === 'caidat' ? 'active' : '' }} justify-between">
@@ -213,14 +213,23 @@
                  x-transition:enter-start="opacity-0 -translate-y-1"
                  x-transition:enter-end="opacity-100 translate-y-0"
                  class="mt-0.5 space-y-0.5">
+                @can('manage-users')
                 <a href="{{ route('users.index') }}"
                    class="sidebar-child-item {{ $routeName === 'users.index' ? 'active' : '' }}">
                     <span class="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0"></span>
                     Người dùng
                 </a>
+                @endcan
+                @can('view-activity-logs')
+                <a href="{{ route('activity-logs.index') }}"
+                   class="sidebar-child-item {{ $routeName === 'activity-logs.index' ? 'active' : '' }}">
+                    <span class="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0"></span>
+                    Lịch sử hoạt động
+                </a>
+                @endcan
             </div>
         </div>
-        @endcan
+        @endcanany
 
     </nav>
 

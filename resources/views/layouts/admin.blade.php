@@ -27,6 +27,7 @@ $activeModule = match(true) {
     || str_starts_with($routeName, 'stock-ledger') => 'kho',
     str_starts_with($routeName, 'reports')         => 'baocao',
     str_starts_with($routeName, 'users')
+    || str_starts_with($routeName, 'activity-logs')
     || str_starts_with($routeName, 'profile')      => 'caidat',
     default => 'tongquan',
 };

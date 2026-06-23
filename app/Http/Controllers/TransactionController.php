@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreTransactionRequest;
 use App\Models\Destination;
 use App\Models\Product;
 use App\Models\Supplier;
@@ -43,23 +44,9 @@ class TransactionController extends Controller
         return view('transactions.create', compact('type', 'suppliers', 'destinations', 'products'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreTransactionRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'type'            => ['required', 'in:IN,OUT'],
-            'date'            => ['required', 'date'],
-            'supplier_id'     => ['required_if:type,IN', 'nullable', 'exists:suppliers,id'],
-            'destination_id'  => ['required_if:type,OUT', 'nullable', 'exists:destinations,id'],
-            'note'            => ['nullable', 'string', 'max:500'],
-            'details'         => ['required', 'array', 'min:1'],
-            'details.*.product_id' => ['required', 'exists:products,id'],
-            'details.*.qty'        => ['required', 'numeric', 'min:0.001'],
-            'details.*.price'      => ['nullable', 'numeric', 'min:0'],
-            'details.*.discount'   => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'details.*.vat'        => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'images'               => ['nullable', 'array', 'max:10'],
-            'images.*'             => ['file', 'image', 'max:5120'], // 5MB per image
-        ]);
+        $data = $request->validated();
 
         $transaction = Transaction::create([
             'code'           => Transaction::generateCode($data['type']),

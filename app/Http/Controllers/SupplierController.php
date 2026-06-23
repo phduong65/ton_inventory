@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreSupplierRequest;
+use App\Http\Requests\UpdateSupplierRequest;
 use App\Models\Supplier;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class SupplierController extends Controller
@@ -23,17 +24,9 @@ class SupplierController extends Controller
         return view('suppliers.index', compact('suppliers'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreSupplierRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'code'           => ['required', 'string', 'max:20', 'unique:suppliers'],
-            'name'           => ['required', 'string', 'max:200'],
-            'phone'          => ['nullable', 'string', 'max:20'],
-            'email'          => ['nullable', 'email', 'max:100'],
-            'address'        => ['nullable', 'string'],
-            'tax_code'       => ['nullable', 'string', 'max:20'],
-            'contact_person' => ['nullable', 'string', 'max:100'],
-        ]);
+        $data = $request->validated();
 
         Supplier::create($data);
         activity()->log('created');
@@ -41,17 +34,9 @@ class SupplierController extends Controller
         return redirect()->route('suppliers.index')->with('success', 'Đã thêm nhà cung cấp.');
     }
 
-    public function update(Request $request, Supplier $supplier): RedirectResponse
+    public function update(UpdateSupplierRequest $request, Supplier $supplier): RedirectResponse
     {
-        $data = $request->validate([
-            'code'           => ['required', 'string', 'max:20', "unique:suppliers,code,{$supplier->id}"],
-            'name'           => ['required', 'string', 'max:200'],
-            'phone'          => ['nullable', 'string', 'max:20'],
-            'email'          => ['nullable', 'email', 'max:100'],
-            'address'        => ['nullable', 'string'],
-            'tax_code'       => ['nullable', 'string', 'max:20'],
-            'contact_person' => ['nullable', 'string', 'max:100'],
-        ]);
+        $data = $request->validated();
 
         $supplier->update($data);
         activity()->performedOn($supplier)->log('updated');

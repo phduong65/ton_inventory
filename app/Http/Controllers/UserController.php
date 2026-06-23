@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,14 +31,9 @@ class UserController extends Controller
         return view('users.index', compact('users', 'roles'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreUserRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'name'     => ['required', 'string', 'max:100'],
-            'email'    => ['required', 'email', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role'     => ['required', 'exists:roles,name'],
-        ]);
+        $data = $request->validated();
 
         $user = User::create([
             'name'     => $data['name'],
@@ -50,13 +47,9 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('success', 'Đã thêm người dùng.');
     }
 
-    public function update(Request $request, User $user): RedirectResponse
+    public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
-        $data = $request->validate([
-            'name'  => ['required', 'string', 'max:100'],
-            'email' => ['required', 'email', "unique:users,email,{$user->id}"],
-            'role'  => ['required', 'exists:roles,name'],
-        ]);
+        $data = $request->validated();
 
         $user->update(['name' => $data['name'], 'email' => $data['email']]);
         $user->syncRoles([$data['role']]);

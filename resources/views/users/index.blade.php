@@ -73,6 +73,51 @@
         @endif
     </div>
 
+    {{-- Edit Modal --}}
+    <div x-show="openEdit" x-transition class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50" @click="openEdit = false"></div>
+        <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold text-gray-900 dark:text-white">Sửa người dùng</h3>
+                <button @click="openEdit = false" class="text-gray-400"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <template x-if="editUser">
+                <form :action="`/users/${editUser.id}`" method="POST" class="space-y-4">
+                    @csrf
+                    @method('PUT')
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tên</label>
+                        <input type="text" name="name" :value="editUser.name" required
+                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                        <input type="email" name="email" :value="editUser.email" required
+                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vai trò</label>
+                        <select name="role" required
+                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            @foreach($roles as $role)
+                            <option value="{{ $role->name }}"
+                                    :selected="editUser.roles && editUser.roles.length && editUser.roles[0].name === '{{ $role->name }}'">
+                                {{ $role->name }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button type="button" @click="openEdit = false"
+                                class="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300">Hủy</button>
+                        <button type="submit"
+                                class="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700">Lưu</button>
+                    </div>
+                </form>
+            </template>
+        </div>
+    </div>
+
     {{-- Create Modal --}}
     <div x-show="openCreate" x-transition class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/50" @click="openCreate = false"></div>

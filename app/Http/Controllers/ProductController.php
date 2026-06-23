@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use App\Models\Category;
 use App\Models\Inventory;
 use App\Models\Product;
@@ -29,18 +31,9 @@ class ProductController extends Controller
         return view('products.index', compact('products', 'categories'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreProductRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'category_id'   => ['nullable', 'exists:categories,id'],
-            'sku'           => ['required', 'string', 'max:50', 'unique:products'],
-            'barcode'       => ['nullable', 'string', 'max:100', 'unique:products'],
-            'name'          => ['required', 'string', 'max:200'],
-            'unit'          => ['required', 'string', 'max:30'],
-            'default_price' => ['nullable', 'numeric', 'min:0'],
-            'description'   => ['nullable', 'string'],
-            'status'        => ['required', 'in:active,inactive'],
-        ]);
+        $data = $request->validated();
 
         $product = Product::create($data);
 
@@ -52,18 +45,9 @@ class ProductController extends Controller
         return redirect()->route('products.index')->with('success', 'Đã thêm sản phẩm.');
     }
 
-    public function update(Request $request, Product $product): RedirectResponse
+    public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
-        $data = $request->validate([
-            'category_id'   => ['nullable', 'exists:categories,id'],
-            'sku'           => ['required', 'string', 'max:50', "unique:products,sku,{$product->id}"],
-            'barcode'       => ['nullable', 'string', 'max:100', "unique:products,barcode,{$product->id}"],
-            'name'          => ['required', 'string', 'max:200'],
-            'unit'          => ['required', 'string', 'max:30'],
-            'default_price' => ['nullable', 'numeric', 'min:0'],
-            'description'   => ['nullable', 'string'],
-            'status'        => ['required', 'in:active,inactive'],
-        ]);
+        $data = $request->validated();
 
         $before = $product->toArray();
         $product->update($data);
