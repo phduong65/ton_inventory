@@ -33,6 +33,8 @@ class ProductController extends Controller
 
     public function store(StoreProductRequest $request): RedirectResponse
     {
+        $this->authorize('create-products');
+
         $data = $request->validated();
 
         $product = Product::create($data);
@@ -47,6 +49,8 @@ class ProductController extends Controller
 
     public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
+        $this->authorize('edit-products');
+
         $data = $request->validated();
 
         $before = $product->toArray();
@@ -62,6 +66,8 @@ class ProductController extends Controller
 
     public function destroy(Product $product): RedirectResponse
     {
+        $this->authorize('delete-products');
+
         if ($product->transactionDetails()->exists()) {
             return back()->with('error', 'Không thể xóa sản phẩm đã có phiếu nhập/xuất.');
         }

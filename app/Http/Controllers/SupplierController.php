@@ -6,6 +6,7 @@ use App\Http\Requests\StoreSupplierRequest;
 use App\Http\Requests\UpdateSupplierRequest;
 use App\Models\Supplier;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class SupplierController extends Controller
@@ -26,6 +27,8 @@ class SupplierController extends Controller
 
     public function store(StoreSupplierRequest $request): RedirectResponse
     {
+        $this->authorize('create-suppliers');
+
         $data = $request->validated();
 
         Supplier::create($data);
@@ -36,6 +39,8 @@ class SupplierController extends Controller
 
     public function update(UpdateSupplierRequest $request, Supplier $supplier): RedirectResponse
     {
+        $this->authorize('edit-suppliers');
+
         $data = $request->validated();
 
         $supplier->update($data);
@@ -46,6 +51,8 @@ class SupplierController extends Controller
 
     public function destroy(Supplier $supplier): RedirectResponse
     {
+        $this->authorize('delete-suppliers');
+
         if ($supplier->transactions()->exists()) {
             return back()->with('error', 'Không thể xóa nhà cung cấp đã có phiếu nhập.');
         }

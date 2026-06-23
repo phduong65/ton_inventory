@@ -19,7 +19,7 @@ class StocktakeService
 
     public function approve(Stocktake $stocktake, int $approvedBy): void
     {
-        DB::transaction(function () use ($stocktake) {
+        DB::transaction(function () use ($stocktake, $approvedBy) {
             $stocktake = Stocktake::lockForUpdate()->findOrFail($stocktake->id);
 
             if (! $stocktake->isPending()) {

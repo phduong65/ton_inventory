@@ -24,6 +24,8 @@ class CategoryController extends Controller
 
     public function store(StoreCategoryRequest $request): RedirectResponse
     {
+        $this->authorize('create-categories');
+
         $data = $request->validated();
 
         Category::create($data);
@@ -35,6 +37,8 @@ class CategoryController extends Controller
 
     public function update(UpdateCategoryRequest $request, Category $category): RedirectResponse
     {
+        $this->authorize('edit-categories');
+
         $data = $request->validated();
 
         $category->update($data);
@@ -46,6 +50,8 @@ class CategoryController extends Controller
 
     public function destroy(Category $category): RedirectResponse
     {
+        $this->authorize('delete-categories');
+
         if ($category->products()->exists()) {
             return back()->with('error', 'Không thể xóa ngành hàng đã có sản phẩm.');
         }

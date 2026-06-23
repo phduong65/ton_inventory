@@ -46,6 +46,8 @@ class TransactionController extends Controller
 
     public function store(StoreTransactionRequest $request): RedirectResponse
     {
+        $this->authorize('create-transactions');
+
         $data = $request->validated();
 
         $transaction = Transaction::create([
@@ -108,6 +110,8 @@ class TransactionController extends Controller
 
     public function destroy(Transaction $transaction): RedirectResponse
     {
+        $this->authorize('delete-transactions');
+
         if (! $transaction->isDraft()) {
             return back()->with('error', 'Chỉ có thể xóa phiếu nháp.');
         }

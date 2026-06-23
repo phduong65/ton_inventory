@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Stocktake extends Model
 {
+    use HasFactory;
     protected $fillable = ['code', 'status', 'created_by', 'approved_by', 'note', 'category_id'];
 
     public function details(): HasMany
