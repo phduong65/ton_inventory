@@ -79,4 +79,18 @@ class StocktakeController extends Controller
         $this->service->approve($stocktake, auth()->id());
         return back()->with('success', 'Đã duyệt phiếu kiểm kê. Tồn kho đã được cập nhật.');
     }
+
+    public function destroy(Stocktake $stocktake)
+    {
+        $this->authorize('create-stocktakes');
+
+        if ($stocktake->status !== 'draft') {
+            return back()->with('error', 'Chỉ có thể xóa phiếu kiểm kê ở trạng thái nháp.');
+        }
+
+        $stocktake->delete();
+        activity()->performedOn($stocktake)->log('deleted');
+
+        return redirect()->route('stocktakes.index')->with('success', 'Đã xóa phiếu kiểm kê.');
+    }
 }

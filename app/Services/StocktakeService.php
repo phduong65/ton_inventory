@@ -15,6 +15,11 @@ class StocktakeService
             throw new \RuntimeException('Chỉ có thể submit phiếu ở trạng thái nháp.');
         }
         $stocktake->update(['status' => 'pending']);
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($stocktake)
+            ->log('submitted');
     }
 
     public function approve(Stocktake $stocktake, int $approvedBy): void
