@@ -5,6 +5,15 @@
 @section('breadcrumb', 'Kho / Thẻ kho')
 
 @section('content')
+<div class="mb-4 flex justify-end">
+    @can('export-stock-ledger')
+    <a href="{{ route('stock-ledger.export', request()->query()) }}"
+       class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        <i class="bi bi-file-earmark-excel"></i> Xuất Excel
+    </a>
+    @endcan
+</div>
+
 <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
     <form method="GET" class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-3">
         <select name="product_id" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-56">

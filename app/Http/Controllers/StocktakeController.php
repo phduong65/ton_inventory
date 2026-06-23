@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreStocktakeRequest;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Stocktake;
@@ -27,24 +28,21 @@ class StocktakeController extends Controller
         return view('stocktakes.create', compact('products', 'rootCategories'));
     }
 
-    public function store(Request $request)
+    public function store(StoreStocktakeRequest $request)
     {
         $this->authorize('create-stocktakes');
 
-        $categoryId = $request->category_id ?: null;
+        $data = $request->validated();
 
         $stocktake = Stocktake::create([
             'code'        => Stocktake::generateCode(),
             'status'      => 'draft',
             'created_by'  => auth()->id(),
-            'note'        => $request->note,
-            'category_id' => $categoryId,
+            'note'        => $data['note'] ?? null,
+            'category_id' => $data['category_id'] ?? null,
         ]);
 
-        foreach ($request->details ?? [] as $row) {
-            if ($row['actual_qty'] === null || $row['actual_qty'] === '') {
-                continue;
-            }
+        foreach ($data['details'] as $row) {
             $stocktake->details()->create([
                 'product_id' => $row['product_id'],
                 'system_qty' => $row['system_qty'],

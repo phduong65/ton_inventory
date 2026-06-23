@@ -68,10 +68,14 @@ Route::middleware('auth')->group(function () {
     // Tồn kho
     Route::get('inventory', [InventoryController::class, 'index'])
         ->name('inventory.index')->middleware('can:view-inventory');
+    Route::get('inventory/export', [InventoryController::class, 'export'])
+        ->name('inventory.export')->middleware('can:export-inventory');
 
     // Thẻ kho
     Route::get('stock-ledger', [StockLedgerController::class, 'index'])
         ->name('stock-ledger.index')->middleware('can:view-stock-ledger');
+    Route::get('stock-ledger/export', [StockLedgerController::class, 'export'])
+        ->name('stock-ledger.export')->middleware('can:export-stock-ledger');
 
     // Kiểm kê
     Route::resource('stocktakes', StocktakeController::class)

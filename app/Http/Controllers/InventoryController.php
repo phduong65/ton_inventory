@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\InventoryExport;
 use App\Models\Category;
 use App\Models\Inventory;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class InventoryController extends Controller
 {
@@ -28,5 +30,11 @@ class InventoryController extends Controller
         $totalValue = Inventory::selectRaw('SUM(quantity * average_cost) as total')->value('total') ?? 0;
 
         return view('inventory.index', compact('items', 'categories', 'totalValue'));
+    }
+
+    public function export(Request $request): BinaryFileResponse
+    {
+        $filename = 'ton-kho-' . now()->format('Ymd-His') . '.xlsx';
+        return Excel::download(new InventoryExport($request->only(['search', 'category_id', 'has_stock'])), $filename);
     }
 }

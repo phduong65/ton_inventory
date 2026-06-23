@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\StockLedgerExport;
 use App\Models\Product;
 use App\Models\StockLedger;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class StockLedgerController extends Controller
 {
@@ -22,5 +25,11 @@ class StockLedgerController extends Controller
         $products = Product::active()->orderBy('name')->get();
 
         return view('stock-ledger.index', compact('ledgers', 'products'));
+    }
+
+    public function export(Request $request): BinaryFileResponse
+    {
+        $filename = 'the-kho-' . now()->format('Ymd-His') . '.xlsx';
+        return Excel::download(new StockLedgerExport($request->only(['product_id', 'type', 'date_from', 'date_to'])), $filename);
     }
 }
