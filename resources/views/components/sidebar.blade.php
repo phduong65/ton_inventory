@@ -3,6 +3,7 @@
         danhmuc: {{ in_array($activeModule, ['danhmuc']) ? 'true' : 'false' }},
         phieu:   {{ in_array($activeModule, ['phieu'])   ? 'true' : 'false' }},
         kho:     {{ in_array($activeModule, ['kho'])     ? 'true' : 'false' }},
+        baocao:  {{ in_array($activeModule, ['baocao'])  ? 'true' : 'false' }},
         caidat:  {{ in_array($activeModule, ['caidat'])  ? 'true' : 'false' }},
     }
 }">
@@ -148,6 +149,52 @@
                 @endcan
             </div>
         </div>
+
+        {{-- Báo cáo group --}}
+        @can('view-reports')
+        <div>
+            <button @click="open.baocao = !open.baocao"
+                    class="sidebar-nav-item {{ $activeModule === 'baocao' ? 'active' : '' }} justify-between">
+                <span class="flex items-center gap-2.5">
+                    <i class="bi bi-bar-chart-line text-base w-5 text-center"></i>
+                    <span>Báo cáo</span>
+                </span>
+                <i class="bi text-xs transition-transform duration-200"
+                   :class="open.baocao ? 'bi-chevron-down' : 'bi-chevron-right'"
+                   style="color:var(--sidebar-text)"></i>
+            </button>
+            <div x-show="open.baocao" x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="mt-0.5 space-y-0.5">
+                <a href="{{ route('reports.receipts') }}"
+                   class="sidebar-child-item {{ $routeName === 'reports.receipts' ? 'active' : '' }}">
+                    <span class="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0"></span>
+                    Báo cáo nhập kho
+                </a>
+                <a href="{{ route('reports.issues') }}"
+                   class="sidebar-child-item {{ $routeName === 'reports.issues' ? 'active' : '' }}">
+                    <span class="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0"></span>
+                    Báo cáo xuất kho
+                </a>
+                <a href="{{ route('reports.inventory') }}"
+                   class="sidebar-child-item {{ $routeName === 'reports.inventory' ? 'active' : '' }}">
+                    <span class="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0"></span>
+                    Báo cáo tồn kho
+                </a>
+                <a href="{{ route('reports.summary') }}"
+                   class="sidebar-child-item {{ $routeName === 'reports.summary' ? 'active' : '' }}">
+                    <span class="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0"></span>
+                    Nhập xuất tồn
+                </a>
+                <a href="{{ route('reports.internal-debt') }}"
+                   class="sidebar-child-item {{ $routeName === 'reports.internal-debt' ? 'active' : '' }}">
+                    <span class="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0"></span>
+                    Công nợ nội bộ
+                </a>
+            </div>
+        </div>
+        @endcan
 
         {{-- Cài đặt group --}}
         @can('manage-users')

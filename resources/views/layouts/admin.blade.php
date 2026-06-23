@@ -25,6 +25,7 @@ $activeModule = match(true) {
     || str_starts_with($routeName, 'stocktakes')   => 'phieu',
     str_starts_with($routeName, 'inventory')
     || str_starts_with($routeName, 'stock-ledger') => 'kho',
+    str_starts_with($routeName, 'reports')         => 'baocao',
     str_starts_with($routeName, 'users')
     || str_starts_with($routeName, 'profile')      => 'caidat',
     default => 'tongquan',
@@ -53,5 +54,6 @@ $activeModule = match(true) {
     </div>
 </div>
 
+@stack('scripts')
 </body>
 </html>

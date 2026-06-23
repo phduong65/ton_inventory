@@ -6,6 +6,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StockLedgerController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TransactionController;
@@ -80,6 +81,19 @@ Route::middleware('auth')->group(function () {
 
     Route::post('stocktakes/{stocktake}/approve', [StocktakeController::class, 'approve'])
         ->name('stocktakes.approve')->middleware('can:approve-stocktakes');
+
+    // Báo cáo
+    Route::prefix('reports')->name('reports.')->middleware('can:view-reports')->group(function () {
+        Route::get('receipts',      [ReportController::class, 'receipts'])->name('receipts');
+        Route::get('issues',        [ReportController::class, 'issues'])->name('issues');
+        Route::get('inventory',     [ReportController::class, 'inventory'])->name('inventory');
+        Route::get('summary',       [ReportController::class, 'summary'])->name('summary');
+        Route::get('internal-debt', [ReportController::class, 'internalDebt'])->name('internal-debt');
+
+        Route::get('receipts/export',  [ReportController::class, 'exportReceipts'])->name('receipts.export')->middleware('can:export-reports');
+        Route::get('issues/export',    [ReportController::class, 'exportIssues'])->name('issues.export')->middleware('can:export-reports');
+        Route::get('summary/export',   [ReportController::class, 'exportSummary'])->name('summary.export')->middleware('can:export-reports');
+    });
 
     // Người dùng
     Route::resource('users', UserController::class)
