@@ -19,7 +19,7 @@ class ReceiptsExport implements FromCollection, WithHeadings, WithMapping, WithS
         $from = $this->filters['date_from'] ?? now()->startOfMonth()->format('Y-m-d');
         $to   = $this->filters['date_to']   ?? now()->format('Y-m-d');
 
-        return TransactionDetail::with(['product.category', 'transaction.supplier'])
+        return TransactionDetail::with(['product.category', 'product.unit', 'transaction.supplier'])
             ->whereHas('transaction', function ($q) use ($from, $to) {
                 $q->where('type', 'IN')
                   ->where('status', 'approved')
@@ -45,7 +45,7 @@ class ReceiptsExport implements FromCollection, WithHeadings, WithMapping, WithS
             $row->transaction?->supplier?->name,
             $row->product?->category?->name,
             $row->product?->name,
-            $row->product?->unit,
+            $row->product?->unit?->name,
             $row->qty,
             $row->price,
             $row->discount,

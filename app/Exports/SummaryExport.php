@@ -42,7 +42,7 @@ class SummaryExport implements FromCollection, WithHeadings, WithMapping, WithSt
 
         $productIds = $periodActivity->keys()->merge($openingLastIds->keys())->unique();
 
-        $products = Product::with('category')
+        $products = Product::with(['category', 'unit'])
             ->whereIn('id', $productIds)
             ->orderBy('name')
             ->get()
@@ -73,7 +73,7 @@ class SummaryExport implements FromCollection, WithHeadings, WithMapping, WithSt
         return [
             $row['product']->sku,
             $row['product']->name,
-            $row['product']->unit,
+            $row['product']->unit?->name,
             $row['product']->category?->name,
             $row['openQty'],
             $row['inQty'],

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\DestinationInventoryExport;
 use App\Exports\IssuesExport;
 use App\Exports\ReceiptsExport;
 use App\Exports\SummaryExport;
@@ -24,7 +25,7 @@ class ReportController extends Controller
         $from = $request->date_from ?? now()->startOfMonth()->format('Y-m-d');
         $to   = $request->date_to   ?? now()->format('Y-m-d');
 
-        $rows = TransactionDetail::with(['product.category', 'transaction.supplier'])
+        $rows = TransactionDetail::with(['product.category', 'product.unit', 'transaction.supplier'])
             ->whereHas('transaction', function ($q) use ($from, $to, $request) {
                 $q->where('type', 'IN')
                   ->where('status', 'approved')
@@ -33,7 +34,7 @@ class ReportController extends Controller
             })
             ->when($request->product_id, fn ($q) => $q->where('product_id', $request->product_id))
             ->get()
-            ->sortByDesc(fn ($r) => [$r->transaction?->date, $r->transaction_id])
+            ->sortByDesc(fn ($r) => $r->transaction?->date?->format('Y-m-d') . '-' . str_pad($r->transaction_id, 10, '0', STR_PAD_LEFT))
             ->values();
 
         $suppliers = Supplier::orderBy('name')->get();
@@ -47,7 +48,7 @@ class ReportController extends Controller
         $from = $request->date_from ?? now()->startOfMonth()->format('Y-m-d');
         $to   = $request->date_to   ?? now()->format('Y-m-d');
 
-        $rows = StockLedger::with(['product.category', 'transaction.destination'])
+        $rows = StockLedger::with(['product.category', 'product.unit', 'transaction.destination'])
             ->where('type', 'OUT')
             ->whereHas('transaction', function ($q) use ($from, $to, $request) {
                 $q->where('status', 'approved')
@@ -56,7 +57,7 @@ class ReportController extends Controller
             })
             ->when($request->product_id, fn ($q) => $q->where('product_id', $request->product_id))
             ->get()
-            ->sortByDesc(fn ($r) => [$r->transaction?->date, $r->transaction_id])
+            ->sortByDesc(fn ($r) => $r->transaction?->date?->format('Y-m-d') . '-' . str_pad($r->transaction_id, 10, '0', STR_PAD_LEFT))
             ->values();
 
         $destinations = Destination::all();
@@ -67,11 +68,47 @@ class ReportController extends Controller
 
     public function inventory(Request $request): View
     {
-        $asOf  = $request->as_of ?? now()->format('Y-m-d');
-        $today = now()->format('Y-m-d');
+        $asOf         = $request->as_of ?? now()->format('Y-m-d');
+        $today        = now()->format('Y-m-d');
+        $destinations = Destination::orderBy('name')->get();
 
+        // ── Chế độ kho con ───────────────────────────────────────────────
+        if ($request->filled('destination_id')) {
+            $ledgerRows = StockLedger::with(['product.category', 'product.unit', 'transaction.destination'])
+                ->where('type', 'OUT')
+                ->whereHas('transaction', function ($q) use ($asOf, $request) {
+                    $q->where('status', 'approved')
+                      ->whereDate('date', '<=', $asOf)
+                      ->where('destination_id', $request->destination_id);
+                })
+                ->get();
+
+            $destItems = $ledgerRows
+                ->groupBy('product_id')
+                ->map(function ($rows) {
+                    $qty   = $rows->sum(fn ($r) => abs($r->qty));
+                    $value = $rows->sum(fn ($r) => abs($r->qty) * ($r->cost_price ?? 0));
+                    return (object) [
+                        'product'      => $rows->first()->product,
+                        'quantity'     => $qty,
+                        'average_cost' => $qty > 0 ? $value / $qty : 0,
+                    ];
+                })
+                ->filter(fn ($r) => $r->product !== null && $r->quantity > 0)
+                ->sortBy('product.name')
+                ->values();
+
+            $totalValue        = $destItems->sum(fn ($i) => $i->quantity * $i->average_cost);
+            $activeDestination = $destinations->firstWhere('id', $request->destination_id);
+
+            return view('reports.inventory', compact(
+                'destItems', 'activeDestination', 'destinations', 'asOf', 'today', 'totalValue'
+            ));
+        }
+
+        // ── Chế độ Kho Tổng (40) ─────────────────────────────────────────
         if ($asOf >= $today) {
-            $items = Inventory::with(['product.category'])
+            $items = Inventory::with(['product.category', 'product.unit'])
                 ->whereHas('product', fn ($q) => $q->where('status', 'active'))
                 ->get()
                 ->map(fn ($inv) => (object) [
@@ -89,7 +126,7 @@ class ReportController extends Controller
             ->groupBy('product_id')
             ->pluck('last_id', 'product_id');
 
-            $items = StockLedger::with(['product.category'])
+            $items = StockLedger::with(['product.category', 'product.unit'])
                 ->whereIn('id', $lastIds->isEmpty() ? [0] : $lastIds->values())
                 ->get()
                 ->map(fn ($sl) => (object) [
@@ -104,7 +141,7 @@ class ReportController extends Controller
 
         $totalValue = $items->sum(fn ($i) => $i->quantity * $i->average_cost);
 
-        return view('reports.inventory', compact('items', 'asOf', 'today', 'totalValue'));
+        return view('reports.inventory', compact('items', 'destinations', 'asOf', 'today', 'totalValue'));
     }
 
     public function summary(Request $request): View
@@ -137,7 +174,7 @@ class ReportController extends Controller
             ->merge($openingLastIds->keys())
             ->unique();
 
-        $products = Product::with('category')
+        $products = Product::with(['category', 'unit'])
             ->whereIn('id', $productIds)
             ->orderBy('name')
             ->get()
@@ -167,7 +204,7 @@ class ReportController extends Controller
 
         $destinations = Destination::all()->keyBy('id');
 
-        $rows = StockLedger::with(['product.category', 'transaction.destination'])
+        $rows = StockLedger::with(['product.category', 'product.unit', 'transaction.destination'])
             ->where('type', 'OUT')
             ->whereHas('transaction', function ($q) use ($month, $year) {
                 $q->where('status', 'approved')
@@ -232,5 +269,60 @@ class ReportController extends Controller
         $to   = $request->date_to   ?? now()->format('Y-m-d');
 
         return Excel::download(new SummaryExport($request->all()), "nhap-xuat-ton-{$from}_{$to}.xlsx");
+    }
+
+    public function destinationInventory(Request $request): View
+    {
+        $asOf  = $request->as_of ?? now()->format('Y-m-d');
+        $today = now()->format('Y-m-d');
+
+        $ledgerRows = StockLedger::with(['product.category', 'product.unit', 'transaction.destination'])
+            ->where('type', 'OUT')
+            ->whereHas('transaction', function ($q) use ($asOf, $request) {
+                $q->where('status', 'approved')
+                  ->whereDate('date', '<=', $asOf)
+                  ->when($request->destination_id, fn ($q) => $q->where('destination_id', $request->destination_id));
+            })
+            ->when($request->product_id, fn ($q) => $q->where('product_id', $request->product_id))
+            ->get();
+
+        $destinations = Destination::orderBy('name')->get();
+        $products     = Product::active()->orderBy('name')->get();
+
+        // Group: destination_id → product_id → { product, qty, avg_cost, value }
+        $grouped = $ledgerRows
+            ->groupBy(fn ($sl) => $sl->transaction?->destination_id)
+            ->map(function ($destRows) {
+                return $destRows
+                    ->groupBy('product_id')
+                    ->map(function ($rows) {
+                        $qty   = $rows->sum(fn ($r) => abs($r->qty));
+                        $value = $rows->sum(fn ($r) => abs($r->qty) * $r->cost_price);
+                        return (object) [
+                            'product'  => $rows->first()->product,
+                            'qty'      => $qty,
+                            'avg_cost' => $qty > 0 ? $value / $qty : 0,
+                            'value'    => $value,
+                        ];
+                    })
+                    ->filter(fn ($r) => $r->product !== null && $r->qty > 0)
+                    ->sortBy('product.name')
+                    ->values();
+            })
+            ->filter(fn ($rows) => $rows->isNotEmpty());
+
+        return view('reports.destination-inventory', compact(
+            'grouped', 'destinations', 'asOf', 'today', 'products'
+        ));
+    }
+
+    public function exportDestinationInventory(Request $request): BinaryFileResponse
+    {
+        $asOf = $request->as_of ?? now()->format('Y-m-d');
+
+        return Excel::download(
+            new DestinationInventoryExport($request->all()),
+            "ton-kho-con-{$asOf}.xlsx"
+        );
     }
 }

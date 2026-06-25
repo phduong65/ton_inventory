@@ -7,10 +7,16 @@ use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
+use App\Models\Unit;
 use Tests\TestCase;
 
 class ProductTest extends TestCase
 {
+    private function unitId(): int
+    {
+        return Unit::firstOrCreate(['code' => 'CAI'], ['name' => 'Cái'])->id;
+    }
+
     // ─── List ────────────────────────────────────────────────────────────────
 
     public function test_authenticated_user_can_view_products(): void
@@ -28,23 +34,23 @@ class ProductTest extends TestCase
     public function test_admin_can_create_product(): void
     {
         $this->actingAs($this->admin)->post(route('products.store'), [
-            'sku'    => 'SKU-TEST-001',
-            'name'   => 'Sản phẩm test',
-            'unit'   => 'cái',
-            'status' => 'active',
+            'sku'     => 'SKU-TEST-001',
+            'name'    => 'Sản phẩm test',
+            'unit_id' => $this->unitId(),
+            'status'  => 'active',
         ])->assertRedirect(route('products.index'));
 
         $this->assertDatabaseHas('products', ['sku' => 'SKU-TEST-001']);
-        $this->assertDatabaseHas('inventory', ['quantity' => 0]); // inventory row created
+        $this->assertDatabaseHas('inventory', ['quantity' => 0]);
     }
 
     public function test_accountant_can_create_product(): void
     {
         $this->actingAs($this->accountant)->post(route('products.store'), [
-            'sku'    => 'SKU-ACC-001',
-            'name'   => 'Sản phẩm kế toán',
-            'unit'   => 'chai',
-            'status' => 'active',
+            'sku'     => 'SKU-ACC-001',
+            'name'    => 'Sản phẩm kế toán',
+            'unit_id' => $this->unitId(),
+            'status'  => 'active',
         ])->assertRedirect();
 
         $this->assertDatabaseHas('products', ['sku' => 'SKU-ACC-001']);
@@ -53,29 +59,29 @@ class ProductTest extends TestCase
     public function test_supervisor_cannot_create_product(): void
     {
         $this->actingAs($this->supervisor)->post(route('products.store'), [
-            'sku'    => 'SKU-NOPE',
-            'name'   => 'Không được tạo',
-            'unit'   => 'cái',
-            'status' => 'active',
+            'sku'     => 'SKU-NOPE',
+            'name'    => 'Không được tạo',
+            'unit_id' => $this->unitId(),
+            'status'  => 'active',
         ])->assertForbidden();
     }
 
     public function test_manager_cannot_create_product(): void
     {
         $this->actingAs($this->manager)->post(route('products.store'), [
-            'sku'    => 'SKU-MGR',
-            'name'   => 'Manager tạo',
-            'unit'   => 'cái',
-            'status' => 'active',
+            'sku'     => 'SKU-MGR',
+            'name'    => 'Manager tạo',
+            'unit_id' => $this->unitId(),
+            'status'  => 'active',
         ])->assertForbidden();
     }
 
     public function test_store_validation_requires_sku(): void
     {
         $this->actingAs($this->admin)->post(route('products.store'), [
-            'name'   => 'Thiếu SKU',
-            'unit'   => 'cái',
-            'status' => 'active',
+            'name'    => 'Thiếu SKU',
+            'unit_id' => $this->unitId(),
+            'status'  => 'active',
         ])->assertSessionHasErrors('sku');
     }
 
@@ -84,10 +90,10 @@ class ProductTest extends TestCase
         Product::factory()->create(['sku' => 'SKU-DUP']);
 
         $this->actingAs($this->admin)->post(route('products.store'), [
-            'sku'    => 'SKU-DUP',
-            'name'   => 'Trùng SKU',
-            'unit'   => 'cái',
-            'status' => 'active',
+            'sku'     => 'SKU-DUP',
+            'name'    => 'Trùng SKU',
+            'unit_id' => $this->unitId(),
+            'status'  => 'active',
         ])->assertSessionHasErrors('sku');
     }
 
@@ -99,10 +105,10 @@ class ProductTest extends TestCase
         Inventory::create(['product_id' => $product->id, 'quantity' => 0, 'average_cost' => 0]);
 
         $this->actingAs($this->admin)->put(route('products.update', $product), [
-            'sku'    => $product->sku,
-            'name'   => 'Tên mới',
-            'unit'   => $product->unit,
-            'status' => 'active',
+            'sku'     => $product->sku,
+            'name'    => 'Tên mới',
+            'unit_id' => $product->unit_id,
+            'status'  => 'active',
         ])->assertRedirect(route('products.index'));
 
         $this->assertEquals('Tên mới', $product->fresh()->name);
@@ -114,10 +120,10 @@ class ProductTest extends TestCase
         Inventory::create(['product_id' => $product->id, 'quantity' => 0, 'average_cost' => 0]);
 
         $this->actingAs($this->accountant)->put(route('products.update', $product), [
-            'sku'    => $product->sku,
-            'name'   => 'Đã sửa',
-            'unit'   => $product->unit,
-            'status' => 'inactive',
+            'sku'     => $product->sku,
+            'name'    => 'Đã sửa',
+            'unit_id' => $product->unit_id,
+            'status'  => 'inactive',
         ])->assertRedirect();
 
         $this->assertEquals('inactive', $product->fresh()->status);
@@ -128,10 +134,10 @@ class ProductTest extends TestCase
         $product = Product::factory()->create();
 
         $this->actingAs($this->supervisor)->put(route('products.update', $product), [
-            'sku'    => $product->sku,
-            'name'   => 'Cố sửa',
-            'unit'   => $product->unit,
-            'status' => 'active',
+            'sku'     => $product->sku,
+            'name'    => 'Cố sửa',
+            'unit_id' => $product->unit_id,
+            'status'  => 'active',
         ])->assertForbidden();
     }
 
@@ -141,10 +147,10 @@ class ProductTest extends TestCase
         Inventory::create(['product_id' => $product->id, 'quantity' => 0, 'average_cost' => 0]);
 
         $this->actingAs($this->admin)->put(route('products.update', $product), [
-            'sku'    => 'SKU-SAME',
-            'name'   => 'Không đổi SKU',
-            'unit'   => $product->unit,
-            'status' => 'active',
+            'sku'     => 'SKU-SAME',
+            'name'    => 'Không đổi SKU',
+            'unit_id' => $product->unit_id,
+            'status'  => 'active',
         ])->assertRedirect();
 
         $this->assertDatabaseHas('products', ['id' => $product->id, 'sku' => 'SKU-SAME']);
@@ -168,15 +174,14 @@ class ProductTest extends TestCase
     {
         $product  = Product::factory()->create();
         $supplier = Supplier::factory()->create();
-        $tx       = Transaction::factory()->create(['type' => 'IN', 'status' => 'draft', 'supplier_id' => $supplier->id, 'created_by' => $this->admin->id]);
+        $tx       = Transaction::factory()->create([
+            'type' => 'IN', 'status' => 'draft',
+            'supplier_id' => $supplier->id, 'created_by' => $this->admin->id,
+        ]);
         TransactionDetail::create([
-            'transaction_id' => $tx->id,
-            'product_id'     => $product->id,
-            'qty'            => 1,
-            'price'          => 0,
-            'discount'       => 0,
-            'vat'            => 0,
-            'amount'         => 0,
+            'transaction_id' => $tx->id, 'product_id' => $product->id,
+            'qty' => 1, 'base_qty' => 1, 'conversion_factor' => 1,
+            'price' => 0, 'discount' => 0, 'vat' => 0, 'amount' => 0,
         ]);
 
         $this->actingAs($this->admin)

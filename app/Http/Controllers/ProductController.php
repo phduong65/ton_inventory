@@ -7,6 +7,8 @@ use App\Http\Requests\UpdateProductRequest;
 use App\Models\Category;
 use App\Models\Inventory;
 use App\Models\Product;
+use App\Models\Unit;
+use App\Models\UnitConversion;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -15,7 +17,7 @@ class ProductController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Product::with(['category', 'inventory'])
+        $query = Product::with(['category', 'unit', 'inventory', 'unitConversions.unit'])
             ->when($request->search, fn($q) => $q->where(function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
                   ->orWhere('sku', 'like', "%{$request->search}%")
@@ -27,8 +29,9 @@ class ProductController extends Controller
 
         $products   = $query->paginate(20)->withQueryString();
         $categories = Category::orderBy('name')->get();
+        $units      = Unit::orderBy('name')->get();
 
-        return view('products.index', compact('products', 'categories'));
+        return view('products.index', compact('products', 'categories', 'units'));
     }
 
     public function store(StoreProductRequest $request): RedirectResponse
@@ -36,11 +39,14 @@ class ProductController extends Controller
         $this->authorize('create-products');
 
         $data = $request->validated();
+        $conversions = $data['conversions'] ?? [];
+        unset($data['conversions']);
 
         $product = Product::create($data);
 
-        // Tạo inventory record
         Inventory::create(['product_id' => $product->id, 'quantity' => 0, 'average_cost' => 0]);
+
+        $this->syncConversions($product, $conversions);
 
         activity()->performedOn($product)->log('created');
 
@@ -52,9 +58,13 @@ class ProductController extends Controller
         $this->authorize('edit-products');
 
         $data = $request->validated();
+        $conversions = $data['conversions'] ?? [];
+        unset($data['conversions']);
 
         $before = $product->toArray();
         $product->update($data);
+
+        $this->syncConversions($product, $conversions);
 
         activity()
             ->performedOn($product)
@@ -76,5 +86,27 @@ class ProductController extends Controller
         activity()->performedOn($product)->log('deleted');
 
         return redirect()->route('products.index')->with('success', 'Đã xóa sản phẩm.');
+    }
+
+    private function syncConversions(Product $product, array $conversions): void
+    {
+        // Xóa conversions cũ rồi tạo lại (đơn giản, safe với fresh data)
+        $product->unitConversions()->delete();
+
+        foreach ($conversions as $conv) {
+            if (empty($conv['unit_id']) || empty($conv['factor'])) {
+                continue;
+            }
+            // Không cho phép quy đổi với chính đơn vị cơ sở
+            if ((int) $conv['unit_id'] === (int) $product->unit_id) {
+                continue;
+            }
+            UnitConversion::create([
+                'product_id' => $product->id,
+                'unit_id'    => $conv['unit_id'],
+                'factor'     => $conv['factor'],
+                'note'       => $conv['note'] ?? null,
+            ]);
+        }
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Inventory;
+use App\Models\Setting;
 use App\Models\StockLedger;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
@@ -65,6 +66,30 @@ class TransactionService
             throw new \RuntimeException('Chỉ có thể submit phiếu ở trạng thái nháp.');
         }
 
+        if (! Setting::get('require_approval', true)) {
+            DB::transaction(function () use ($transaction) {
+                $transaction = Transaction::lockForUpdate()->findOrFail($transaction->id);
+
+                match ($transaction->type) {
+                    'IN'         => $this->processInbound($transaction),
+                    'OUT'        => $this->processOutbound($transaction),
+                    'ADJUSTMENT' => $this->processAdjustment($transaction),
+                };
+
+                $transaction->update([
+                    'status'      => 'approved',
+                    'approved_by' => auth()->id(),
+                ]);
+
+                activity()
+                    ->causedBy(auth()->user())
+                    ->performedOn($transaction)
+                    ->log('approved');
+            });
+
+            return;
+        }
+
         $transaction->update(['status' => 'pending']);
 
         activity()
@@ -83,12 +108,18 @@ class TransactionService
                 ['quantity' => 0, 'average_cost' => 0]
             );
 
+            // base_qty: số lượng theo đơn vị cơ sở (qty * conversion_factor)
+            $baseQty       = $detail->base_qty ?: $detail->qty;
+            $pricePerBase  = $detail->conversion_factor > 0
+                ? $detail->price / $detail->conversion_factor
+                : $detail->price;
+
             $beforeQty = $inventory->quantity;
 
             $totalValue = ($inventory->quantity * $inventory->average_cost)
-                        + ($detail->qty * $detail->price);
-            $newQty     = $inventory->quantity + $detail->qty;
-            $newAvgCost = $newQty > 0 ? $totalValue / $newQty : $detail->price;
+                        + ($baseQty * $pricePerBase);
+            $newQty     = $inventory->quantity + $baseQty;
+            $newAvgCost = $newQty > 0 ? $totalValue / $newQty : $pricePerBase;
 
             $inventory->update([
                 'quantity'     => $newQty,
@@ -100,10 +131,10 @@ class TransactionService
                 'transaction_id' => $transaction->id,
                 'product_id'     => $detail->product_id,
                 'type'           => 'IN',
-                'qty'            => $detail->qty,
+                'qty'            => $baseQty,
                 'before_qty'     => $beforeQty,
                 'after_qty'      => $newQty,
-                'cost_price'     => $detail->price,
+                'cost_price'     => $pricePerBase,
                 'created_at'     => now(),
             ]);
         }
@@ -114,25 +145,28 @@ class TransactionService
         $transaction->load('details.product');
 
         foreach ($transaction->details as $detail) {
+            $baseQty   = $detail->base_qty ?: $detail->qty;
             $inventory = Inventory::lockForUpdate()
                 ->where('product_id', $detail->product_id)
                 ->first();
 
-            if (! $inventory || $inventory->quantity < $detail->qty) {
+            if (! $inventory || $inventory->quantity < $baseQty) {
                 $available = $inventory ? $inventory->quantity : 0;
+                $unitName  = $detail->product?->unit?->name ?? 'đvt';
                 throw new \RuntimeException(
-                    "Không đủ tồn kho: {$detail->product->name} (tồn: {$available}, cần: {$detail->qty})"
+                    "Không đủ tồn kho: {$detail->product->name} (tồn: {$available} {$unitName}, cần: {$baseQty} {$unitName})"
                 );
             }
         }
 
         foreach ($transaction->details as $detail) {
+            $baseQty   = $detail->base_qty ?: $detail->qty;
             $inventory = Inventory::lockForUpdate()
                 ->where('product_id', $detail->product_id)
                 ->first();
 
             $beforeQty = $inventory->quantity;
-            $newQty    = $inventory->quantity - $detail->qty;
+            $newQty    = $inventory->quantity - $baseQty;
 
             $inventory->update([
                 'quantity'   => $newQty,
@@ -143,7 +177,7 @@ class TransactionService
                 'transaction_id' => $transaction->id,
                 'product_id'     => $detail->product_id,
                 'type'           => 'OUT',
-                'qty'            => -$detail->qty,
+                'qty'            => -$baseQty,
                 'before_qty'     => $beforeQty,
                 'after_qty'      => $newQty,
                 'cost_price'     => $inventory->average_cost,
@@ -162,8 +196,9 @@ class TransactionService
                 ['quantity' => 0, 'average_cost' => 0]
             );
 
+            $baseQty   = $detail->base_qty ?: $detail->qty;
             $beforeQty = $inventory->quantity;
-            $newQty    = $inventory->quantity + $detail->qty;
+            $newQty    = $inventory->quantity + $baseQty;
 
             $inventory->update([
                 'quantity'   => $newQty,
@@ -174,7 +209,7 @@ class TransactionService
                 'transaction_id' => $transaction->id,
                 'product_id'     => $detail->product_id,
                 'type'           => 'ADJUSTMENT',
-                'qty'            => $detail->qty,
+                'qty'            => $baseQty,
                 'before_qty'     => $beforeQty,
                 'after_qty'      => $newQty,
                 'cost_price'     => $inventory->average_cost,

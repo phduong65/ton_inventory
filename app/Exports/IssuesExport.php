@@ -19,7 +19,7 @@ class IssuesExport implements FromCollection, WithHeadings, WithMapping, WithSty
         $from = $this->filters['date_from'] ?? now()->startOfMonth()->format('Y-m-d');
         $to   = $this->filters['date_to']   ?? now()->format('Y-m-d');
 
-        return StockLedger::with(['product.category', 'transaction.destination'])
+        return StockLedger::with(['product.category', 'product.unit', 'transaction.destination'])
             ->where('type', 'OUT')
             ->whereHas('transaction', function ($q) use ($from, $to) {
                 $q->where('status', 'approved')
@@ -46,7 +46,7 @@ class IssuesExport implements FromCollection, WithHeadings, WithMapping, WithSty
             $row->transaction?->destination?->name,
             $row->product?->category?->name,
             $row->product?->name,
-            $row->product?->unit,
+            $row->product?->unit?->name,
             $qty,
             $row->cost_price,
             $qty * $row->cost_price,

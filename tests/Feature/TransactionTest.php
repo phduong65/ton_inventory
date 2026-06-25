@@ -9,6 +9,7 @@ use App\Models\StockLedger;
 use App\Models\Supplier;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
+use App\Models\Unit;
 use App\Services\TransactionService;
 use Tests\TestCase;
 
@@ -23,6 +24,11 @@ class TransactionTest extends TestCase
         return $product;
     }
 
+    private function unitId(): int
+    {
+        return Unit::firstOrCreate(['code' => 'CAI'], ['name' => 'Cái'])->id;
+    }
+
     private function makePendingInbound(Product $product, float $qty, float $price): Transaction
     {
         $supplier = Supplier::factory()->create();
@@ -32,33 +38,39 @@ class TransactionTest extends TestCase
             'created_by'  => $this->admin->id,
         ]);
         TransactionDetail::create([
-            'transaction_id' => $tx->id,
-            'product_id'     => $product->id,
-            'qty'            => $qty,
-            'price'          => $price,
-            'discount'       => 0,
-            'vat'            => 0,
-            'amount'         => $qty * $price,
+            'transaction_id'    => $tx->id,
+            'product_id'        => $product->id,
+            'unit_id'           => $product->unit_id ?? $this->unitId(),
+            'conversion_factor' => 1,
+            'base_qty'          => $qty,
+            'qty'               => $qty,
+            'price'             => $price,
+            'discount'          => 0,
+            'vat'               => 0,
+            'amount'            => $qty * $price,
         ]);
         return $tx;
     }
 
     private function makePendingOutbound(Product $product, float $qty): Transaction
     {
-        $destination = Destination::create(['name' => 'Kho 43']);
+        $destination = Destination::firstOrCreate(['name' => 'Kho 43']);
         $tx = Transaction::factory()->pending()->create([
             'type'           => 'OUT',
             'destination_id' => $destination->id,
             'created_by'     => $this->admin->id,
         ]);
         TransactionDetail::create([
-            'transaction_id' => $tx->id,
-            'product_id'     => $product->id,
-            'qty'            => $qty,
-            'price'          => 0,
-            'discount'       => 0,
-            'vat'            => 0,
-            'amount'         => 0,
+            'transaction_id'    => $tx->id,
+            'product_id'        => $product->id,
+            'unit_id'           => $product->unit_id ?? $this->unitId(),
+            'conversion_factor' => 1,
+            'base_qty'          => $qty,
+            'qty'               => $qty,
+            'price'             => 0,
+            'discount'          => 0,
+            'vat'               => 0,
+            'amount'            => 0,
         ]);
         return $tx;
     }
@@ -79,14 +91,21 @@ class TransactionTest extends TestCase
 
     public function test_accountant_can_create_transaction(): void
     {
-        $product     = $this->makeProduct();
-        $supplier    = Supplier::factory()->create();
+        $product  = $this->makeProduct();
+        $supplier = Supplier::factory()->create();
+        $unitId   = $product->unit_id ?? $this->unitId();
 
         $this->actingAs($this->accountant)->post(route('transactions.store'), [
             'type'        => 'IN',
             'date'        => now()->toDateString(),
             'supplier_id' => $supplier->id,
-            'details'     => [['product_id' => $product->id, 'qty' => 10, 'price' => 50000]],
+            'details'     => [[
+                'product_id'        => $product->id,
+                'unit_id'           => $unitId,
+                'conversion_factor' => 1,
+                'qty'               => 10,
+                'price'             => 50000,
+            ]],
         ])->assertRedirect();
 
         $this->assertDatabaseHas('transactions', ['type' => 'IN', 'status' => 'draft']);
@@ -96,12 +115,19 @@ class TransactionTest extends TestCase
     {
         $product  = $this->makeProduct();
         $supplier = Supplier::factory()->create();
+        $unitId   = $product->unit_id ?? $this->unitId();
 
         $this->actingAs($this->supervisor)->post(route('transactions.store'), [
             'type'        => 'IN',
             'date'        => now()->toDateString(),
             'supplier_id' => $supplier->id,
-            'details'     => [['product_id' => $product->id, 'qty' => 10, 'price' => 50000]],
+            'details'     => [[
+                'product_id'        => $product->id,
+                'unit_id'           => $unitId,
+                'conversion_factor' => 1,
+                'qty'               => 10,
+                'price'             => 50000,
+            ]],
         ])->assertForbidden();
     }
 
@@ -129,7 +155,7 @@ class TransactionTest extends TestCase
             'supplier_id' => $supplier->id,
             'created_by'  => $this->accountant->id,
         ]);
-        TransactionDetail::create(['transaction_id' => $tx->id, 'product_id' => $product->id, 'qty' => 5, 'price' => 10000, 'discount' => 0, 'vat' => 0, 'amount' => 50000]);
+        TransactionDetail::create(['transaction_id' => $tx->id, 'product_id' => $product->id, 'unit_id' => $this->unitId(), 'conversion_factor' => 1, 'base_qty' => 5, 'qty' => 5, 'price' => 10000, 'discount' => 0, 'vat' => 0, 'amount' => 50000]);
 
         $this->actingAs($this->accountant)
              ->post(route('transactions.submit', $tx))
