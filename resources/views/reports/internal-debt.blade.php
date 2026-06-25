@@ -82,7 +82,7 @@
                         <div class="font-medium text-gray-900 dark:text-white">{{ $row['product']?->name }}</div>
                         <div class="text-xs text-gray-400 font-mono">{{ $row['product']?->sku }}</div>
                     </td>
-                    <td class="px-4 py-2.5 text-center text-gray-500">{{ $row['product']?->unit }}</td>
+                    <td class="px-4 py-2.5 text-center text-gray-500">{{ $row['product']?->unit?->name ?? '—' }}</td>
                     @foreach($destinations as $destId => $dest)
                     @php $d = $row['destData'][$destId] ?? ['qty' => 0, 'value' => 0]; @endphp
                     <td class="px-4 py-2.5 text-right border-l border-gray-100 dark:border-gray-700 {{ $d['qty'] > 0 ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-600' }}">
@@ -99,7 +99,7 @@
                 @empty
                 <tr>
                     <td colspan="{{ 2 + $destinations->count() * 2 + 1 }}" class="px-4 py-12 text-center text-gray-400">
-                        <i class="ph-scales text-4xl block mb-2"></i>
+                        <i class="ph ph-scales text-4xl block mb-2"></i>
                         Không có dữ liệu xuất kho trong tháng {{ $month }}/{{ $year }}
                     </td>
                 </tr>

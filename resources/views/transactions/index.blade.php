@@ -5,17 +5,17 @@
 @section('breadcrumb', 'Phiếu NK/XK')
 
 @section('content')
-<div class="flex items-center justify-between mb-4">
+<div class="flex flex-wrap items-center justify-between gap-3 mb-4">
     <p class="text-sm text-gray-500">{{ $transactions->total() }} phiếu</p>
-    <div class="flex gap-2">
+    <div class="flex flex-wrap gap-2">
         @can('create-transactions')
         <a href="{{ route('transactions.create', ['type' => 'IN']) }}"
            class="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">
-            <i class="bi bi-download"></i> Tạo phiếu nhập
+            <i class="bi bi-download"></i> <span class="hidden sm:inline">Tạo </span>Phiếu nhập
         </a>
         <a href="{{ route('transactions.create', ['type' => 'OUT']) }}"
            class="inline-flex items-center gap-1.5 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg">
-            <i class="bi bi-upload"></i> Tạo phiếu xuất
+            <i class="bi bi-upload"></i> <span class="hidden sm:inline">Tạo </span>Phiếu xuất
         </a>
         @endcan
     </div>
@@ -23,12 +23,12 @@
 
 <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
     <form method="GET" class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-3">
-        <select name="type" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+        <select name="type" class="flex-1 min-w-[120px] px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
             <option value="">Tất cả loại</option>
             <option value="IN" {{ request('type') === 'IN' ? 'selected' : '' }}>Nhập kho</option>
             <option value="OUT" {{ request('type') === 'OUT' ? 'selected' : '' }}>Xuất kho</option>
         </select>
-        <select name="status" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+        <select name="status" class="flex-1 min-w-[130px] px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
             <option value="">Tất cả trạng thái</option>
             <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Nháp</option>
             <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Chờ duyệt</option>
@@ -36,16 +36,16 @@
             <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Từ chối</option>
         </select>
         <input type="date" name="date_from" value="{{ request('date_from') }}"
-               class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+               class="flex-1 min-w-[130px] px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
         <input type="date" name="date_to" value="{{ request('date_to') }}"
-               class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-        <button type="submit" class="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 rounded-lg">
+               class="flex-1 min-w-[130px] px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+        <button type="submit" class="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium">
             <i class="bi bi-search mr-1"></i> Lọc
         </button>
     </form>
 
     <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left">
+        <table class="w-full text-sm text-left whitespace-nowrap">
             <thead class="bg-gray-50 dark:bg-gray-700 text-xs text-gray-500 dark:text-gray-400 uppercase">
                 <tr>
                     <th class="px-4 py-3">Số phiếu</th>

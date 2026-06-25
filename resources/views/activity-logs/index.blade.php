@@ -11,13 +11,11 @@
     <form method="GET" class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-3 items-end">
         <div class="flex flex-col gap-1">
             <label class="text-xs text-gray-500 dark:text-gray-400">Từ ngày</label>
-            <input type="text" name="date_from" value="{{ request('date_from') }}" id="date_from"
-                   class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-36">
+            <x-date-picker name="date_from" value="{{ request('date_from') }}" class="w-36" placeholder="Từ ngày" />
         </div>
         <div class="flex flex-col gap-1">
             <label class="text-xs text-gray-500 dark:text-gray-400">Đến ngày</label>
-            <input type="text" name="date_to" value="{{ request('date_to') }}" id="date_to"
-                   class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-36">
+            <x-date-picker name="date_to" value="{{ request('date_to') }}" class="w-36" placeholder="Đến ngày" />
         </div>
         <div class="flex flex-col gap-1">
             <label class="text-xs text-gray-500 dark:text-gray-400">Người dùng</label>
@@ -125,10 +123,4 @@
     @endif
 </div>
 
-@push('scripts')
-<script>
-flatpickr('#date_from', { dateFormat: 'Y-m-d' });
-flatpickr('#date_to',   { dateFormat: 'Y-m-d' });
-</script>
-@endpush
 @endsection

@@ -8,7 +8,7 @@
 <div class="mb-4 flex justify-end">
     @can('export-stock-ledger')
     <a href="{{ route('stock-ledger.export', request()->query()) }}"
-       class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+       class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
         <i class="bi bi-file-earmark-excel"></i> Xuất Excel
     </a>
     @endcan
@@ -16,29 +16,39 @@
 
 <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
     <form method="GET" class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-3">
-        <select name="product_id" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-56">
-            <option value="">Tất cả sản phẩm</option>
-            @foreach($products as $p)
-            <option value="{{ $p->id }}" {{ request('product_id') == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
-            @endforeach
-        </select>
+        @php
+            $productItems = array_merge(
+                [['v' => '', 'l' => 'Tất cả sản phẩm']],
+                $products->map(fn($p) => ['v' => $p->id, 'l' => $p->name, 's' => $p->sku ?? ''])->toArray()
+            );
+        @endphp
+        <div x-data="selectPalette({ value: '{{ request('product_id') ?? '' }}', items: {{ Js::from($productItems) }} })"
+             @keydown.escape.window="if(open){ close(); $event.stopPropagation(); }"
+             @keydown.arrow-down.window.prevent="if(open) moveDown()"
+             @keydown.arrow-up.window.prevent="if(open) moveUp()"
+             @keydown.enter.window.prevent="if(open) confirm()">
+            <input type="hidden" name="product_id" :value="currentValue">
+            <button type="button" class="sp-trigger w-56" @click="openPalette()">
+                <span x-text="currentLabel || 'Tất cả sản phẩm'"></span>
+                <i class="bi bi-search"></i>
+            </button>
+            @include('partials.select-palette', ['placeholder' => 'Tìm theo tên, SKU...', 'countLabel' => 'sản phẩm'])
+        </div>
         <select name="type" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
             <option value="">Tất cả loại</option>
             <option value="IN" {{ request('type') === 'IN' ? 'selected' : '' }}>Nhập</option>
             <option value="OUT" {{ request('type') === 'OUT' ? 'selected' : '' }}>Xuất</option>
             <option value="ADJUSTMENT" {{ request('type') === 'ADJUSTMENT' ? 'selected' : '' }}>Điều chỉnh</option>
         </select>
-        <input type="date" name="date_from" value="{{ request('date_from') }}"
-               class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-        <input type="date" name="date_to" value="{{ request('date_to') }}"
-               class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+        <x-date-picker name="date_from" value="{{ request('date_from') }}" class="w-36" placeholder="Từ ngày" />
+        <x-date-picker name="date_to" value="{{ request('date_to') }}" class="w-36" placeholder="Đến ngày" />
         <button type="submit" class="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 rounded-lg">
             <i class="bi bi-search mr-1"></i> Lọc
         </button>
     </form>
 
     <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left">
+        <table class="w-full text-sm text-left whitespace-nowrap">
             <thead class="bg-gray-50 dark:bg-gray-700 text-xs text-gray-500 dark:text-gray-400 uppercase">
                 <tr>
                     <th class="px-4 py-3">Ngày</th>

@@ -11,13 +11,11 @@
     <form method="GET" class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-3 items-end">
         <div class="flex flex-col gap-1">
             <label class="text-xs text-gray-500 dark:text-gray-400">Từ ngày</label>
-            <input type="text" name="date_from" value="{{ $from }}" id="date_from"
-                   class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-36">
+            <x-date-picker name="date_from" :value="$from" class="w-36" placeholder="Từ ngày" />
         </div>
         <div class="flex flex-col gap-1">
             <label class="text-xs text-gray-500 dark:text-gray-400">Đến ngày</label>
-            <input type="text" name="date_to" value="{{ $to }}" id="date_to"
-                   class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-36">
+            <x-date-picker name="date_to" :value="$to" class="w-36" placeholder="Đến ngày" />
         </div>
 
         {{-- Kỳ nhanh --}}
@@ -84,7 +82,7 @@
                         {{ $row['product']?->name }}
                         <span class="text-xs text-gray-400 ml-1">{{ $row['product']?->category?->name }}</span>
                     </td>
-                    <td class="px-4 py-2.5 text-gray-500">{{ $row['product']?->unit }}</td>
+                    <td class="px-4 py-2.5 text-gray-500">{{ $row['product']?->unit?->name ?? '—' }}</td>
                     <td class="px-4 py-2.5 text-right text-gray-600 dark:text-gray-400">{{ number_format($row['openQty'], 0, ',', '.') }}</td>
                     <td class="px-4 py-2.5 text-right font-medium {{ $row['inQty'] > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-400' }}">
                         {{ $row['inQty'] > 0 ? '+'.number_format($row['inQty'], 0, ',', '.') : '—' }}
@@ -102,7 +100,7 @@
                 @empty
                 <tr>
                     <td colspan="8" class="px-4 py-12 text-center text-gray-400">
-                        <i class="ph-chart-bar text-4xl block mb-2"></i>
+                        <i class="ph ph-chart-bar text-4xl block mb-2"></i>
                         Không có dữ liệu trong kỳ này
                     </td>
                 </tr>
@@ -124,10 +122,4 @@
     </div>
 </div>
 
-@push('scripts')
-<script>
-flatpickr('#date_from', { dateFormat: 'Y-m-d' });
-flatpickr('#date_to',   { dateFormat: 'Y-m-d' });
-</script>
-@endpush
 @endsection

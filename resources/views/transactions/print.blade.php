@@ -21,7 +21,15 @@
         tfoot td { font-weight: bold; }
         .signatures { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 32px; text-align: center; }
         .sig-title { font-weight: bold; margin-bottom: 48px; }
-        @media print { @page { margin: 15mm; } button { display: none; } }
+        .attachments { margin-top: 20px; }
+        .attachments .section-title { font-weight: bold; margin-bottom: 10px; font-size: 13px; }
+        .img-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        .img-grid img { width: 160px; height: 120px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; }
+        @media print {
+            @page { margin: 15mm; }
+            button { display: none; }
+            .img-grid img { width: 140px; height: 105px; page-break-inside: avoid; }
+        }
     </style>
 </head>
 <body>
@@ -76,7 +84,7 @@
             <tr>
                 <td class="center">{{ $i + 1 }}</td>
                 <td>{{ $detail->product?->name }}</td>
-                <td class="center">{{ $detail->product?->unit }}</td>
+                <td class="center">{{ $detail->product?->unit?->name ?? '—' }}</td>
                 <td class="right">{{ number_format($detail->qty, 0, ',', '.') }}</td>
                 @if($transaction->type === 'IN')
                 <td class="right">{{ number_format($detail->price, 0, ',', '.') }}</td>
@@ -96,6 +104,18 @@
         </tfoot>
         @endif
     </table>
+
+    @php $images = $transaction->attachments->filter(fn($a) => $a->isImage()); @endphp
+    @if($transaction->type === 'IN' && $images->isNotEmpty())
+    <div class="attachments">
+        <p class="section-title">Hình ảnh đính kèm ({{ $images->count() }} ảnh):</p>
+        <div class="img-grid">
+            @foreach($images as $att)
+            <img src="{{ $att->url }}" alt="{{ $att->original_name }}" title="{{ $att->original_name }}">
+            @endforeach
+        </div>
+    </div>
+    @endif
 
     <div class="signatures">
         <div>

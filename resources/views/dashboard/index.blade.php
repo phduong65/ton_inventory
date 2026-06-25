@@ -9,52 +9,52 @@
 {{-- Stat Cards --}}
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
-    <div class="stat-card">
-        <div class="flex items-start justify-between mb-3">
-            <div class="icon-bg-green w-9 h-9 rounded-lg flex items-center justify-center">
-                <i class="bi bi-clock-history text-sm text-primary-600"></i>
+    <div class="stat-card stat-card-green">
+        <div class="flex items-start justify-between mb-2 lg:mb-3">
+            <div class="icon-bg-green w-8 h-8 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="bi bi-clock-history text-xs lg:text-sm text-primary-600"></i>
             </div>
-            <span class="badge-green text-xs font-medium px-2 py-0.5 rounded-full">Phiếu</span>
+            <span class="badge-green text-[10px] lg:text-xs font-medium px-1.5 lg:px-2 py-0.5 rounded-full">Phiếu</span>
         </div>
-        <p class="text-2xl font-bold" style="color:var(--text-primary)">{{ $pendingCount }}</p>
-        <p class="text-xs mt-0.5" style="color:var(--text-muted)">Chờ duyệt</p>
+        <p class="text-xl lg:text-2xl font-bold leading-tight" style="color:var(--text-primary)">{{ $pendingCount }}</p>
+        <p class="text-[11px] lg:text-xs mt-0.5" style="color:var(--text-muted)">Chờ duyệt</p>
     </div>
 
-    <div class="stat-card">
-        <div class="flex items-start justify-between mb-3">
-            <div class="icon-bg-indigo w-9 h-9 rounded-lg flex items-center justify-center">
-                <i class="bi bi-box-seam text-sm" style="color:#6366f1"></i>
+    <div class="stat-card stat-card-indigo">
+        <div class="flex items-start justify-between mb-2 lg:mb-3">
+            <div class="icon-bg-indigo w-8 h-8 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="bi bi-box-seam text-xs lg:text-sm" style="color:#6366f1"></i>
             </div>
-            <span class="badge-blue text-xs font-medium px-2 py-0.5 rounded-full">SKU</span>
+            <span class="badge-blue text-[10px] lg:text-xs font-medium px-1.5 lg:px-2 py-0.5 rounded-full">SKU</span>
         </div>
-        <p class="text-2xl font-bold" style="color:var(--text-primary)">{{ $totalProducts }}</p>
-        <p class="text-xs mt-0.5" style="color:var(--text-muted)">Sản phẩm</p>
+        <p class="text-xl lg:text-2xl font-bold leading-tight" style="color:var(--text-primary)">{{ $totalProducts }}</p>
+        <p class="text-[11px] lg:text-xs mt-0.5" style="color:var(--text-muted)">Sản phẩm</p>
     </div>
 
-    <div class="stat-card">
-        <div class="flex items-start justify-between mb-3">
-            <div class="icon-bg-orange w-9 h-9 rounded-lg flex items-center justify-center">
-                <i class="bi bi-download text-sm" style="color:#f97316"></i>
+    <div class="stat-card stat-card-orange">
+        <div class="flex items-start justify-between mb-2 lg:mb-3">
+            <div class="icon-bg-orange w-8 h-8 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="bi bi-download text-xs lg:text-sm" style="color:#f97316"></i>
             </div>
-            <span class="badge-orange text-xs font-medium px-2 py-0.5 rounded-full">Hôm nay</span>
+            <span class="badge-orange text-[10px] lg:text-xs font-medium px-1.5 lg:px-2 py-0.5 rounded-full">Hôm nay</span>
         </div>
-        <p class="text-2xl font-bold" style="color:var(--text-primary)">{{ $todayIn }}</p>
-        <p class="text-xs mt-0.5" style="color:var(--text-muted)">Phiếu nhập</p>
+        <p class="text-xl lg:text-2xl font-bold leading-tight" style="color:var(--text-primary)">{{ $todayIn }}</p>
+        <p class="text-[11px] lg:text-xs mt-0.5" style="color:var(--text-muted)">Phiếu nhập</p>
     </div>
 
-    <div class="stat-card">
-        <div class="flex items-start justify-between mb-3">
-            <div class="icon-bg-pink w-9 h-9 rounded-lg flex items-center justify-center">
-                <i class="bi bi-currency-dollar text-sm" style="color:#ec4899"></i>
+    <div class="stat-card stat-card-pink">
+        <div class="flex items-start justify-between mb-2 lg:mb-3">
+            <div class="icon-bg-pink w-8 h-8 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="bi bi-currency-dollar text-xs lg:text-sm" style="color:#ec4899"></i>
             </div>
-            <span class="badge-purple text-xs font-medium px-2 py-0.5 rounded-full">VND</span>
+            <span class="badge-purple text-[10px] lg:text-xs font-medium px-1.5 lg:px-2 py-0.5 rounded-full">VND</span>
         </div>
-        <p class="text-2xl font-bold" style="color:var(--text-primary)">
+        <p class="text-xl lg:text-2xl font-bold leading-tight" style="color:var(--text-primary)">
             @php $v = $totalStockValue;
             echo $v >= 1000000000 ? number_format($v/1000000000,1).'B' : number_format($v/1000000,0).'M';
             @endphp
         </p>
-        <p class="text-xs mt-0.5" style="color:var(--text-muted)">Giá trị tồn kho</p>
+        <p class="text-[11px] lg:text-xs mt-0.5" style="color:var(--text-muted)">Giá trị tồn kho</p>
     </div>
 
 </div>
@@ -68,7 +68,7 @@
         </a>
     </div>
     <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+        <table class="w-full text-sm whitespace-nowrap">
             <thead>
                 <tr class="table-header">
                     <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wide" style="color:var(--text-muted)">Số phiếu</th>

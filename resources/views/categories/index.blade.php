@@ -18,7 +18,7 @@
 
     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left">
+            <table class="w-full text-sm text-left whitespace-nowrap">
                 <thead class="bg-gray-50 dark:bg-gray-700 text-xs text-gray-500 dark:text-gray-400 uppercase">
                     <tr>
                         <th class="px-4 py-3">Tên danh mục</th>
@@ -75,7 +75,7 @@
 
     {{-- Create Modal --}}
     @can('create-categories')
-    <div x-show="openCreate" x-transition class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div x-show="openCreate" x-transition class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
         <div class="absolute inset-0 bg-black/50" @click="openCreate = false"></div>
         <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-5">
             <div class="flex items-center justify-between mb-4">
@@ -112,7 +112,7 @@
 
     {{-- Edit Modal --}}
     @can('edit-categories')
-    <div x-show="openEdit" x-transition class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div x-show="openEdit" x-transition class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
         <div class="absolute inset-0 bg-black/50" @click="openEdit = false"></div>
         <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-5">
             <div class="flex items-center justify-between mb-4">

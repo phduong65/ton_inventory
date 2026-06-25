@@ -11,13 +11,11 @@
     <form method="GET" class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-3 items-end">
         <div class="flex flex-col gap-1">
             <label class="text-xs text-gray-500 dark:text-gray-400">Từ ngày</label>
-            <input type="text" name="date_from" value="{{ $from }}" id="date_from"
-                   class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-36">
+            <x-date-picker name="date_from" :value="$from" class="w-36" placeholder="Từ ngày" />
         </div>
         <div class="flex flex-col gap-1">
             <label class="text-xs text-gray-500 dark:text-gray-400">Đến ngày</label>
-            <input type="text" name="date_to" value="{{ $to }}" id="date_to"
-                   class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-36">
+            <x-date-picker name="date_to" :value="$to" class="w-36" placeholder="Đến ngày" />
         </div>
         <div class="flex flex-col gap-1">
             <label class="text-xs text-gray-500 dark:text-gray-400">Điểm nhận</label>
@@ -28,14 +26,25 @@
                 @endforeach
             </select>
         </div>
-        <div class="flex flex-col gap-1">
+        @php
+            $productItems = array_merge(
+                [['v' => '', 'l' => 'Tất cả sản phẩm']],
+                $products->map(fn($p) => ['v' => $p->id, 'l' => $p->name, 's' => $p->sku ?? ''])->toArray()
+            );
+        @endphp
+        <div class="flex flex-col gap-1"
+             x-data="selectPalette({ value: '{{ request('product_id') ?? '' }}', items: {{ Js::from($productItems) }} })"
+             @keydown.escape.window="if(open){ close(); $event.stopPropagation(); }"
+             @keydown.arrow-down.window.prevent="if(open) moveDown()"
+             @keydown.arrow-up.window.prevent="if(open) moveUp()"
+             @keydown.enter.window.prevent="if(open) confirm()">
             <label class="text-xs text-gray-500 dark:text-gray-400">Sản phẩm</label>
-            <select name="product_id" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-48">
-                <option value="">Tất cả sản phẩm</option>
-                @foreach($products as $p)
-                <option value="{{ $p->id }}" {{ request('product_id') == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
-                @endforeach
-            </select>
+            <input type="hidden" name="product_id" :value="currentValue">
+            <button type="button" class="sp-trigger w-48" @click="openPalette()">
+                <span x-text="currentLabel || 'Tất cả sản phẩm'"></span>
+                <i class="bi bi-search"></i>
+            </button>
+            @include('partials.select-palette', ['placeholder' => 'Tìm theo tên, SKU...', 'countLabel' => 'sản phẩm'])
         </div>
         <div class="flex gap-2">
             <button type="submit" class="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg">
@@ -101,7 +110,7 @@
                         <div class="font-medium text-gray-900 dark:text-white">{{ $row->product?->name }}</div>
                         <div class="text-xs text-gray-400 font-mono">{{ $row->product?->sku }}</div>
                     </td>
-                    <td class="px-4 py-2.5 text-gray-500">{{ $row->product?->unit }}</td>
+                    <td class="px-4 py-2.5 text-gray-500">{{ $row->product?->unit?->name ?? '—' }}</td>
                     <td class="px-4 py-2.5 text-right font-medium text-gray-900 dark:text-white">{{ number_format($qty, 0, ',', '.') }}</td>
                     <td class="px-4 py-2.5 text-right text-gray-600 dark:text-gray-400">{{ number_format($row->cost_price, 0, ',', '.') }}</td>
                     <td class="px-4 py-2.5 text-right font-medium text-gray-900 dark:text-white">{{ number_format($value, 0, ',', '.') }}đ</td>
@@ -109,7 +118,7 @@
                 @empty
                 <tr>
                     <td colspan="8" class="px-4 py-12 text-center text-gray-400">
-                        <i class="ph-file-text text-4xl block mb-2"></i>
+                        <i class="ph ph-file-text text-4xl block mb-2"></i>
                         Không có dữ liệu trong kỳ này
                     </td>
                 </tr>
@@ -131,10 +140,4 @@
     </div>
 </div>
 
-@push('scripts')
-<script>
-flatpickr('#date_from', { dateFormat: 'Y-m-d' });
-flatpickr('#date_to',   { dateFormat: 'Y-m-d' });
-</script>
-@endpush
 @endsection
