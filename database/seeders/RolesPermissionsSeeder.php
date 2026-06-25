@@ -15,6 +15,7 @@ class RolesPermissionsSeeder extends Seeder
         $allPermissions = [
             'view-categories', 'create-categories', 'edit-categories', 'delete-categories',
             'view-products', 'create-products', 'edit-products', 'delete-products',
+            'view-units', 'create-units', 'edit-units', 'delete-units',
             'view-suppliers', 'create-suppliers', 'edit-suppliers', 'delete-suppliers',
             'view-transactions', 'create-transactions', 'edit-transactions', 'delete-transactions',
             'approve-transactions', 'reject-transactions', 'print-transactions',
@@ -23,6 +24,7 @@ class RolesPermissionsSeeder extends Seeder
             'view-stock-ledger', 'export-stock-ledger',
             'view-reports', 'export-reports', 'print-reports',
             'manage-users', 'manage-roles', 'manage-settings', 'view-activity-logs',
+            'manage-destinations',
         ];
 
         foreach ($allPermissions as $perm) {
@@ -33,7 +35,8 @@ class RolesPermissionsSeeder extends Seeder
             'admin' => $allPermissions,
 
             'manager' => [
-                'view-categories', 'view-products', 'view-suppliers',
+                'view-categories', 'view-products', 'view-units', 'view-suppliers',
+                'manage-destinations',
                 'view-transactions', 'approve-transactions', 'reject-transactions', 'print-transactions',
                 'view-stocktakes', 'approve-stocktakes',
                 'view-inventory', 'export-inventory',
@@ -45,6 +48,7 @@ class RolesPermissionsSeeder extends Seeder
             'accountant' => [
                 'view-categories',
                 'view-products', 'create-products', 'edit-products',
+                'view-units', 'create-units', 'edit-units',
                 'view-suppliers', 'create-suppliers', 'edit-suppliers',
                 'view-transactions', 'create-transactions', 'edit-transactions', 'print-transactions',
                 'view-stocktakes', 'create-stocktakes',
@@ -54,7 +58,7 @@ class RolesPermissionsSeeder extends Seeder
             ],
 
             'supervisor' => [
-                'view-categories', 'view-products', 'view-suppliers',
+                'view-categories', 'view-products', 'view-units', 'view-suppliers',
                 'view-transactions', 'print-transactions',
                 'view-stocktakes',
                 'view-inventory', 'export-inventory',

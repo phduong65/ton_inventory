@@ -4,15 +4,18 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DestinationController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Dev\TestRunnerController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockLedgerController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\StocktakeController;
+use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +38,11 @@ Route::middleware('auth')->group(function () {
         ->except(['create', 'edit', 'show'])
         ->middleware('can:view-categories');
 
+    // Đơn vị tính
+    Route::resource('units', UnitController::class)
+        ->except(['create', 'edit', 'show'])
+        ->middleware('can:view-units');
+
     // Sản phẩm
     Route::resource('products', ProductController::class)
         ->except(['create', 'edit', 'show'])
@@ -44,6 +52,11 @@ Route::middleware('auth')->group(function () {
     Route::resource('suppliers', SupplierController::class)
         ->except(['create', 'edit', 'show'])
         ->middleware('can:view-suppliers');
+
+    // Kho nhận hàng
+    Route::resource('destinations', DestinationController::class)
+        ->except(['create', 'edit', 'show'])
+        ->middleware('can:manage-destinations');
 
     // Phiếu nhập / xuất
     Route::resource('transactions', TransactionController::class)
@@ -96,6 +109,14 @@ Route::middleware('auth')->group(function () {
         Route::get('summary',       [ReportController::class, 'summary'])->name('summary');
         Route::get('internal-debt', [ReportController::class, 'internalDebt'])->name('internal-debt');
 
+        // Redirect sang inventory.index để thống nhất giao diện tồn kho
+        Route::get('destination-inventory', function (\Illuminate\Http\Request $req) {
+            return redirect()->route('inventory.index', $req->query());
+        })->name('destination-inventory');
+        Route::get('destination-inventory/export', function (\Illuminate\Http\Request $req) {
+            return redirect()->route('inventory.export', $req->query());
+        })->name('destination-inventory.export');
+
         Route::get('receipts/export',  [ReportController::class, 'exportReceipts'])->name('receipts.export')->middleware('can:export-reports');
         Route::get('issues/export',    [ReportController::class, 'exportIssues'])->name('issues.export')->middleware('can:export-reports');
         Route::get('summary/export',   [ReportController::class, 'exportSummary'])->name('summary.export')->middleware('can:export-reports');
@@ -112,10 +133,17 @@ Route::middleware('auth')->group(function () {
     // Lịch sử hoạt động
     Route::get('activity-logs', [ActivityLogController::class, 'index'])
         ->name('activity-logs.index')->middleware('can:view-activity-logs');
+
+    // Cài đặt hệ thống
+    Route::get('settings', [SettingController::class, 'index'])
+        ->name('settings.index')->middleware('can:manage-settings');
+    Route::put('settings', [SettingController::class, 'update'])
+        ->name('settings.update')->middleware('can:manage-settings');
 });
 
 // Dev tools — local only
 Route::middleware('App\Http\Middleware\LocalOnly')->prefix('dev')->name('dev.')->group(function () {
     Route::get('test-runner',      [TestRunnerController::class, 'index'])->name('test-runner');
     Route::post('test-runner/run', [TestRunnerController::class, 'run'])->name('test-runner.run');
+    Route::get('notifications',    fn() => view('dev.notifications'))->name('notifications');
 });
