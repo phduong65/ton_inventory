@@ -4,28 +4,73 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreStocktakeRequest;
 use App\Models\Category;
+use App\Models\Destination;
 use App\Models\Product;
+use App\Models\StockLedger;
 use App\Models\Stocktake;
 use App\Services\StocktakeService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StocktakeController extends Controller
 {
     public function __construct(private StocktakeService $service) {}
 
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('view-stocktakes');
-        $stocktakes = Stocktake::with(['createdBy', 'category'])->latest()->paginate(20);
-        return view('stocktakes.index', compact('stocktakes'));
+
+        $query = Stocktake::with(['createdBy', 'category', 'destination'])
+            ->withCount('details');
+
+        if ($request->destination_id === '0') {
+            $query->whereNull('destination_id');
+        } elseif ($request->destination_id) {
+            $query->where('destination_id', $request->destination_id);
+        }
+
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        $stocktakes   = $query->latest()->paginate(20)->withQueryString();
+        $destinations = Destination::orderBy('name')->get();
+
+        return view('stocktakes.index', compact('stocktakes', 'destinations'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $this->authorize('create-stocktakes');
-        $rootCategories = Category::roots()->with('children.children')->get();
-        $products = Product::active()->with(['inventory', 'category'])->orderBy('name')->get();
-        return view('stocktakes.create', compact('products', 'rootCategories'));
+
+        $destinationId = $request->destination_id;
+        $destination   = null;
+
+        if ($destinationId) {
+            $destination = Destination::findOrFail($destinationId);
+
+            // System qty = cumulative OUT qty sent to this destination per product
+            $systemQtys = StockLedger::where('type', 'OUT')
+                ->whereHas('transaction', fn ($q) => $q->where('status', 'approved')
+                    ->where('destination_id', $destinationId))
+                ->select('product_id', DB::raw('SUM(ABS(qty)) as total_qty'))
+                ->groupBy('product_id')
+                ->pluck('total_qty', 'product_id');
+
+            $products = Product::active()
+                ->with(['category.parent.parent', 'unit'])
+                ->whereIn('id', $systemQtys->isEmpty() ? [0] : $systemQtys->keys())
+                ->orderBy('name')
+                ->get()
+                ->each(fn ($p) => $p->destination_qty = (float) ($systemQtys->get($p->id, 0)));
+
+            $rootCategories = collect();
+        } else {
+            $rootCategories = Category::roots()->with('children.children')->get();
+            $products       = Product::active()->with(['inventory', 'category.parent.parent'])->orderBy('name')->get();
+        }
+
+        return view('stocktakes.create', compact('products', 'rootCategories', 'destination'));
     }
 
     public function store(StoreStocktakeRequest $request)
@@ -34,15 +79,25 @@ class StocktakeController extends Controller
 
         $data = $request->validated();
 
+        $filledDetails = array_values(array_filter(
+            $data['details'],
+            fn ($row) => isset($row['actual_qty']) && $row['actual_qty'] !== null && $row['actual_qty'] !== '',
+        ));
+
+        if (empty($filledDetails)) {
+            return back()->withInput()->with('error', 'Vui lòng nhập số lượng thực tế cho ít nhất một sản phẩm.');
+        }
+
         $stocktake = Stocktake::create([
-            'code'        => Stocktake::generateCode(),
-            'status'      => 'draft',
-            'created_by'  => auth()->id(),
-            'note'        => $data['note'] ?? null,
-            'category_id' => $data['category_id'] ?? null,
+            'code'           => Stocktake::generateCode(),
+            'status'         => 'draft',
+            'created_by'     => auth()->id(),
+            'note'           => $data['note'] ?? null,
+            'category_id'    => $data['category_id'] ?? null,
+            'destination_id' => $data['destination_id'] ?? null,
         ]);
 
-        foreach ($data['details'] as $row) {
+        foreach ($filledDetails as $row) {
             $stocktake->details()->create([
                 'product_id' => $row['product_id'],
                 'system_qty' => $row['system_qty'],
@@ -50,6 +105,11 @@ class StocktakeController extends Controller
                 'variance'   => $row['actual_qty'] - $row['system_qty'],
             ]);
         }
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($stocktake)
+            ->log('created');
 
         if ($request->has('submit')) {
             $this->service->submit($stocktake);
@@ -62,7 +122,7 @@ class StocktakeController extends Controller
     public function show(Stocktake $stocktake)
     {
         $this->authorize('view-stocktakes');
-        $stocktake->load(['details.product', 'createdBy', 'approvedBy', 'category']);
+        $stocktake->load(['details.product.unit', 'createdBy', 'approvedBy', 'category', 'destination']);
         return view('stocktakes.show', compact('stocktake'));
     }
 
@@ -77,7 +137,7 @@ class StocktakeController extends Controller
     {
         $this->authorize('approve-stocktakes');
         $this->service->approve($stocktake, auth()->id());
-        return back()->with('success', 'Đã duyệt phiếu kiểm kê. Tồn kho đã được cập nhật.');
+        return back()->with('success', 'Đã duyệt phiếu kiểm kê.');
     }
 
     public function destroy(Stocktake $stocktake)

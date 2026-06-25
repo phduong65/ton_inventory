@@ -31,6 +31,22 @@ class StocktakeService
                 throw new \RuntimeException('Phiếu kiểm kê không ở trạng thái chờ duyệt.');
             }
 
+            // Kiểm kê kho con: chỉ ghi nhận, KHÔNG cập nhật inventory/stock_ledger Kho Tổng
+            if ($stocktake->destination_id !== null) {
+                $stocktake->update([
+                    'status'      => 'approved',
+                    'approved_by' => $approvedBy,
+                ]);
+
+                activity()
+                    ->causedBy(auth()->user())
+                    ->performedOn($stocktake)
+                    ->log('approved');
+
+                return;
+            }
+
+            // Kiểm kê Kho Tổng: cập nhật inventory + stock_ledger
             $stocktake->load('details');
 
             foreach ($stocktake->details as $detail) {

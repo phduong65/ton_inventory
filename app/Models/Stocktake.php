@@ -6,11 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Destination;
 
 class Stocktake extends Model
 {
     use HasFactory;
-    protected $fillable = ['code', 'status', 'created_by', 'approved_by', 'note', 'category_id'];
+    protected $fillable = ['code', 'status', 'created_by', 'approved_by', 'note', 'category_id', 'destination_id'];
 
     public function details(): HasMany
     {
@@ -20,6 +21,11 @@ class Stocktake extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function destination(): BelongsTo
+    {
+        return $this->belongsTo(Destination::class);
     }
 
     public function createdBy(): BelongsTo
