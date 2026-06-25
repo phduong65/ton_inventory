@@ -8,16 +8,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class TransactionDetail extends Model
 {
     protected $fillable = [
-        'transaction_id', 'product_id',
+        'transaction_id', 'product_id', 'unit_id',
+        'conversion_factor', 'base_qty',
         'qty', 'price', 'discount', 'vat', 'amount',
     ];
 
     protected $casts = [
-        'qty'      => 'float',
-        'price'    => 'float',
-        'discount' => 'float',
-        'vat'      => 'float',
-        'amount'   => 'float',
+        'qty'               => 'float',
+        'conversion_factor' => 'float',
+        'base_qty'          => 'float',
+        'price'             => 'float',
+        'discount'          => 'float',
+        'vat'               => 'float',
+        'amount'            => 'float',
     ];
 
     public function transaction(): BelongsTo
@@ -28,6 +31,11 @@ class TransactionDetail extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     public function computeAmount(): float

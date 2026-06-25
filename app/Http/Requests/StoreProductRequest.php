@@ -11,14 +11,19 @@ class StoreProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'category_id'   => ['nullable', 'exists:categories,id'],
-            'sku'           => ['required', 'string', 'max:50', 'unique:products'],
-            'barcode'       => ['nullable', 'string', 'max:100', 'unique:products'],
-            'name'          => ['required', 'string', 'max:200'],
-            'unit'          => ['required', 'string', 'max:30'],
-            'default_price' => ['nullable', 'numeric', 'min:0'],
-            'description'   => ['nullable', 'string'],
-            'status'        => ['required', 'in:active,inactive'],
+            'category_id'                => ['nullable', 'exists:categories,id'],
+            'sku'                        => ['required', 'string', 'max:50', 'unique:products'],
+            'barcode'                    => ['nullable', 'string', 'max:100', 'unique:products'],
+            'name'                       => ['required', 'string', 'max:200'],
+            'unit_id'                    => ['required', 'exists:units,id'],
+            'default_price'              => ['nullable', 'numeric', 'min:0'],
+            'min_stock'                  => ['nullable', 'numeric', 'min:0'],
+            'description'                => ['nullable', 'string'],
+            'status'                     => ['required', 'in:active,inactive'],
+            'conversions'                => ['nullable', 'array'],
+            'conversions.*.unit_id'      => ['required_with:conversions', 'exists:units,id'],
+            'conversions.*.factor'       => ['required_with:conversions', 'numeric', 'min:0.0001'],
+            'conversions.*.note'         => ['nullable', 'string', 'max:200'],
         ];
     }
 }

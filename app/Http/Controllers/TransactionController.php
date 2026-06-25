@@ -39,9 +39,27 @@ class TransactionController extends Controller
         $type         = $request->get('type', 'IN');
         $suppliers    = Supplier::orderBy('name')->get();
         $destinations = Destination::all();
-        $products     = Product::active()->with('inventory')->orderBy('name')->get();
+        $products     = Product::active()->with(['category', 'unit', 'inventory', 'unitConversions.unit'])->orderBy('name')->get();
 
-        return view('transactions.create', compact('type', 'suppliers', 'destinations', 'products'));
+        // Dữ liệu sản phẩm nhúng vào JS cho command palette + quy đổi đơn vị
+        $productsUnitData = $products->mapWithKeys(fn($p) => [
+            $p->id => [
+                'name'         => $p->name,
+                'sku'          => $p->sku ?? '',
+                'category'     => $p->category?->name ?? '',
+                'baseUnitId'   => $p->unit_id,
+                'baseUnitName' => $p->unit?->name ?? '',
+                'defaultPrice' => $p->default_price,
+                'stock'        => (float) ($p->inventory?->quantity ?? 0),
+                'conversions'  => $p->unitConversions->map(fn($c) => [
+                    'unitId'   => $c->unit_id,
+                    'unitName' => $c->unit?->name ?? '',
+                    'factor'   => $c->factor,
+                ])->values(),
+            ],
+        ]);
+
+        return view('transactions.create', compact('type', 'suppliers', 'destinations', 'products', 'productsUnitData'));
     }
 
     public function store(StoreTransactionRequest $request): RedirectResponse
@@ -62,20 +80,25 @@ class TransactionController extends Controller
         ]);
 
         foreach ($data['details'] as $detail) {
-            $qty      = (float) $detail['qty'];
-            $price    = (float) ($detail['price'] ?? 0);
-            $discount = (float) ($detail['discount'] ?? 0);
-            $vat      = (float) ($detail['vat'] ?? 0);
-            $amount   = $qty * $price * (1 - $discount / 100) * (1 + $vat / 100);
+            $qty              = (float) $detail['qty'];
+            $conversionFactor = (float) ($detail['conversion_factor'] ?? 1);
+            $baseQty          = $qty * $conversionFactor;
+            $price            = (float) ($detail['price'] ?? 0);
+            $discount         = (float) ($detail['discount'] ?? 0);
+            $vat              = (float) ($detail['vat'] ?? 0);
+            $amount           = $qty * $price * (1 - $discount / 100) * (1 + $vat / 100);
 
             TransactionDetail::create([
-                'transaction_id' => $transaction->id,
-                'product_id'     => $detail['product_id'],
-                'qty'            => $qty,
-                'price'          => $price,
-                'discount'       => $discount,
-                'vat'            => $vat,
-                'amount'         => $amount,
+                'transaction_id'    => $transaction->id,
+                'product_id'        => $detail['product_id'],
+                'unit_id'           => $detail['unit_id'],
+                'conversion_factor' => $conversionFactor,
+                'base_qty'          => $baseQty,
+                'qty'               => $qty,
+                'price'             => $price,
+                'discount'          => $discount,
+                'vat'               => $vat,
+                'amount'            => $amount,
             ]);
         }
 
@@ -103,7 +126,7 @@ class TransactionController extends Controller
 
     public function show(Transaction $transaction): View
     {
-        $transaction->load(['details.product', 'supplier', 'destination', 'createdBy', 'approvedBy', 'attachments']);
+        $transaction->load(['details.product.unit', 'details.unit', 'supplier', 'destination', 'createdBy', 'approvedBy', 'attachments']);
 
         return view('transactions.show', compact('transaction'));
     }
@@ -170,7 +193,7 @@ class TransactionController extends Controller
 
     public function print(Transaction $transaction): View
     {
-        $transaction->load(['details.product', 'supplier', 'destination', 'createdBy', 'approvedBy']);
+        $transaction->load(['details.product.unit', 'details.unit', 'supplier', 'destination', 'createdBy', 'approvedBy', 'attachments']);
 
         return view('transactions.print', compact('transaction'));
     }

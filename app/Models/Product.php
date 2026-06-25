@@ -14,13 +14,34 @@ class Product extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'category_id', 'sku', 'barcode', 'name',
-        'unit', 'default_price', 'description', 'status',
+        'category_id', 'unit_id', 'sku', 'barcode', 'name',
+        'default_price', 'min_stock', 'description', 'status',
     ];
+
+    protected $casts = [
+        'min_stock' => 'float',
+    ];
+
+    public function isBelowMinStock(): bool
+    {
+        return $this->min_stock !== null
+            && $this->min_stock > 0
+            && ($this->inventory?->quantity ?? 0) <= $this->min_stock;
+    }
 
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class);
+    }
+
+    public function unitConversions(): HasMany
+    {
+        return $this->hasMany(UnitConversion::class)->with('unit');
     }
 
     public function inventory(): HasOne
