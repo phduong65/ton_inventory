@@ -140,6 +140,39 @@ class StocktakeController extends Controller
         return back()->with('success', 'Đã duyệt phiếu kiểm kê.');
     }
 
+    public function reject(Request $request, Stocktake $stocktake)
+    {
+        $this->authorize('reject-stocktakes');
+
+        $request->validate(['reason' => ['required', 'string', 'max:500']]);
+
+        if (! $stocktake->isPending()) {
+            return back()->with('error', 'Chỉ có thể từ chối phiếu đang chờ duyệt.');
+        }
+
+        $stocktake->update([
+            'status'          => 'rejected',
+            'rejected_reason' => $request->reason,
+        ]);
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($stocktake)
+            ->withProperties(['reason' => $request->reason])
+            ->log('rejected');
+
+        return back()->with('success', 'Phiếu kiểm kê đã bị từ chối.');
+    }
+
+    public function print(Stocktake $stocktake)
+    {
+        $this->authorize('view-stocktakes');
+        $stocktake->load(['details.product.unit', 'createdBy', 'approvedBy', 'category', 'destination']);
+        $companyName    = \App\Models\Setting::get('company_name', 'CÔNG TY F&B');
+        $companyAddress = \App\Models\Setting::get('company_address', '');
+        return view('stocktakes.print', compact('stocktake', 'companyName', 'companyAddress'));
+    }
+
     public function destroy(Stocktake $stocktake)
     {
         $this->authorize('create-stocktakes');

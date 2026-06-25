@@ -439,7 +439,7 @@
                                     <td colspan="8" class="px-5 py-2 text-right text-xs font-medium"
                                         style="color:var(--text-muted)">Tổng chiết khấu</td>
                                     <td class="px-5 py-2 text-right text-sm tabular-nums font-semibold" style="color:#f97316">
-                                        <span x-show="totalDiscount > 0" x-text="'- ' + formatNum(totalDiscount)"></span>
+                                        {{-- <span x-show="totalDiscount > 0" x-text="'- ' + formatNum(totalDiscount)"></span> --}}
                                         <span x-show="totalDiscount <= 0" style="color:var(--surface-border)">—</span>
                                     </td>
                                     <td></td>
@@ -448,7 +448,7 @@
                                     <td colspan="8" class="px-5 py-2 text-right text-xs font-medium"
                                         style="color:var(--text-muted)">Tổng VAT</td>
                                     <td class="px-5 py-2 text-right text-sm tabular-nums font-semibold" style="color:#3b82f6">
-                                        <span x-show="totalVat > 0" x-text="'+ ' + formatNum(totalVat)"></span>
+                                        {{-- <span x-show="totalVat > 0" x-text="'+ ' + formatNum(totalVat)"></span> --}}
                                         <span x-show="totalVat <= 0" style="color:var(--surface-border)">—</span>
                                     </td>
                                     <td></td>

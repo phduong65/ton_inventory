@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use App\Imports\ProductsImport;
 use App\Models\Category;
 use App\Models\Inventory;
 use App\Models\Product;
@@ -12,6 +13,7 @@ use App\Models\UnitConversion;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
@@ -108,5 +110,27 @@ class ProductController extends Controller
                 'note'       => $conv['note'] ?? null,
             ]);
         }
+    }
+
+    public function import(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:5120'],
+        ]);
+
+        $import = new ProductsImport();
+        Excel::import($import, $request->file('file'));
+
+        $msg = "Đã import {$import->imported} sản phẩm.";
+        if ($import->skipped > 0) {
+            $msg .= " Bỏ qua {$import->skipped} dòng (trùng SKU hoặc thiếu tên).";
+        }
+
+        activity()
+            ->causedBy(auth()->user())
+            ->withProperties(['imported' => $import->imported, 'skipped' => $import->skipped])
+            ->log('imported');
+
+        return redirect()->route('products.index')->with('success', $msg);
     }
 }

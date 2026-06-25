@@ -10,6 +10,7 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Dev\TestRunnerController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockLedgerController;
 use App\Http\Controllers\SupplierController;
@@ -27,11 +28,15 @@ Route::post('logout', [AuthController::class, 'logout'])->name('logout')->middle
 Route::middleware('auth')->group(function () {
     // Profile
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
     Route::put('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::put('profile/theme', [ProfileController::class, 'updateTheme'])->name('profile.theme');
 
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Tìm kiếm toàn cục
+    Route::get('search', [SearchController::class, 'index'])->name('search.index');
 
     // Danh mục ngành hàng
     Route::resource('categories', CategoryController::class)
@@ -48,6 +53,9 @@ Route::middleware('auth')->group(function () {
         ->except(['create', 'edit', 'show'])
         ->middleware('can:view-products');
 
+    Route::post('products/import', [ProductController::class, 'import'])
+        ->name('products.import')->middleware('can:create-products');
+
     // Nhà cung cấp
     Route::resource('suppliers', SupplierController::class)
         ->except(['create', 'edit', 'show'])
@@ -63,6 +71,11 @@ Route::middleware('auth')->group(function () {
         ->except(['edit', 'update'])
         ->middleware('can:view-transactions');
 
+    Route::get('transactions/{transaction}/edit', [TransactionController::class, 'edit'])
+        ->name('transactions.edit')->middleware('can:edit-transactions');
+    Route::put('transactions/{transaction}', [TransactionController::class, 'update'])
+        ->name('transactions.update')->middleware('can:edit-transactions');
+
     Route::post('transactions/{transaction}/submit', [TransactionController::class, 'submit'])
         ->name('transactions.submit')->middleware('can:create-transactions');
 
@@ -71,6 +84,12 @@ Route::middleware('auth')->group(function () {
 
     Route::post('transactions/{transaction}/reject', [TransactionController::class, 'reject'])
         ->name('transactions.reject')->middleware('can:reject-transactions');
+
+    Route::post('transactions/{transaction}/cancel', [TransactionController::class, 'cancel'])
+        ->name('transactions.cancel')->middleware('can:create-transactions');
+
+    Route::post('transactions/{transaction}/clone', [TransactionController::class, 'clone'])
+        ->name('transactions.clone')->middleware('can:create-transactions');
 
     Route::get('transactions/{transaction}/print', [TransactionController::class, 'print'])
         ->name('transactions.print')->middleware('can:print-transactions');
@@ -101,6 +120,12 @@ Route::middleware('auth')->group(function () {
     Route::post('stocktakes/{stocktake}/approve', [StocktakeController::class, 'approve'])
         ->name('stocktakes.approve')->middleware('can:approve-stocktakes');
 
+    Route::post('stocktakes/{stocktake}/reject', [StocktakeController::class, 'reject'])
+        ->name('stocktakes.reject')->middleware('can:reject-stocktakes');
+
+    Route::get('stocktakes/{stocktake}/print', [StocktakeController::class, 'print'])
+        ->name('stocktakes.print')->middleware('can:view-stocktakes');
+
     // Báo cáo
     Route::prefix('reports')->name('reports.')->middleware('can:view-reports')->group(function () {
         Route::get('receipts',      [ReportController::class, 'receipts'])->name('receipts');
@@ -117,9 +142,10 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('inventory.export', $req->query());
         })->name('destination-inventory.export');
 
-        Route::get('receipts/export',  [ReportController::class, 'exportReceipts'])->name('receipts.export')->middleware('can:export-reports');
-        Route::get('issues/export',    [ReportController::class, 'exportIssues'])->name('issues.export')->middleware('can:export-reports');
-        Route::get('summary/export',   [ReportController::class, 'exportSummary'])->name('summary.export')->middleware('can:export-reports');
+        Route::get('receipts/export',      [ReportController::class, 'exportReceipts'])->name('receipts.export')->middleware('can:export-reports');
+        Route::get('issues/export',        [ReportController::class, 'exportIssues'])->name('issues.export')->middleware('can:export-reports');
+        Route::get('summary/export',       [ReportController::class, 'exportSummary'])->name('summary.export')->middleware('can:export-reports');
+        Route::get('internal-debt/export', [ReportController::class, 'exportInternalDebt'])->name('internal-debt.export')->middleware('can:export-reports');
     });
 
     // Người dùng

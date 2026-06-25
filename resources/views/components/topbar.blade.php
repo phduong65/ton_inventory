@@ -31,18 +31,18 @@
 
     {{-- Center: Search (md+) --}}
     <div class="hidden md:flex items-center">
-        <div class="relative">
+        <form method="GET" action="{{ route('search.index') }}" class="relative">
             <i class="bi bi-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none" style="color:var(--text-muted)"></i>
-            <input type="text"
+            <input type="text" name="q"
+                   value="{{ request('q') }}"
                    placeholder="Tìm kiếm..."
                    class="topbar-search"
-                   readonly
-                   tabindex="-1">
+                   autocomplete="off">
             <span class="absolute right-2.5 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded pointer-events-none"
                   style="background:var(--surface-border); color:var(--text-muted)">
-                Ctrl F
+                Enter
             </span>
-        </div>
+        </form>
     </div>
 
     {{-- Right: Actions --}}

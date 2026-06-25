@@ -50,7 +50,23 @@
                         </a>
                     @endcan
 
+                    @can('create-transactions')
+                    <form action="{{ route('transactions.clone', $transaction) }}" method="POST">
+                        @csrf
+                        <button type="submit"
+                            class="inline-flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <i class="bi bi-copy"></i> Nhân bản
+                        </button>
+                    </form>
+                    @endcan
+
                     @if ($transaction->isDraft())
+                        @can('edit-transactions')
+                            <a href="{{ route('transactions.edit', $transaction) }}"
+                                class="inline-flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <i class="bi bi-pencil"></i> Sửa
+                            </a>
+                        @endcan
                         @can('create-transactions')
                             <form action="{{ route('transactions.submit', $transaction) }}" method="POST">
                                 @csrf
@@ -78,6 +94,19 @@
                                 </button>
                             </form>
                         @endcan
+                    @endif
+
+                    @if ($transaction->isPending())
+                        @if(auth()->user()->hasRole('admin') || $transaction->created_by === auth()->id())
+                        <form action="{{ route('transactions.cancel', $transaction) }}" method="POST"
+                              onsubmit="return confirm('Hủy phiếu và chuyển về nháp?')">
+                            @csrf
+                            <button type="submit"
+                                class="inline-flex items-center gap-1.5 px-3 py-2 text-sm border border-orange-300 text-orange-600 hover:bg-orange-50 rounded-lg">
+                                <i class="bi bi-slash-circle"></i> Hủy
+                            </button>
+                        </form>
+                        @endif
                     @endif
 
                     @if ($requireApproval && $transaction->isPending())

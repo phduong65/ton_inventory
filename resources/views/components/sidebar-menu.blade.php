@@ -2,8 +2,6 @@
 <div class="flex flex-col flex-1 min-h-0" x-data="{
     open: {
         danhmuc: {{ in_array($activeModule, ['danhmuc']) ? 'true' : 'false' }},
-        phieu:   {{ in_array($activeModule, ['phieu'])   ? 'true' : 'false' }},
-        kho:     {{ in_array($activeModule, ['kho'])     ? 'true' : 'false' }},
         baocao:  {{ in_array($activeModule, ['baocao'])  ? 'true' : 'false' }},
         caidat:  {{ in_array($activeModule, ['caidat'])  ? 'true' : 'false' }},
     }
@@ -11,6 +9,7 @@
 
 <nav class="flex-1 px-3 py-3 overflow-y-auto overflow-x-hidden">
 
+    {{-- ── TỔNG QUAN ──────────────────────────────────────── --}}
     <p class="sidebar-section-label">Tổng quan</p>
 
     <a href="{{ route('dashboard') }}"
@@ -20,9 +19,10 @@
         <span class="nav-text">Dashboard</span>
     </a>
 
-    <p class="sidebar-section-label">Quản lý</p>
+    {{-- ── NGHIỆP VỤ ───────────────────────────────────────── --}}
+    <p class="sidebar-section-label sidebar-section-divider">Nghiệp vụ</p>
 
-    {{-- Danh mục --}}
+    {{-- Danh mục (accordion) --}}
     <div>
         <button @click="open.danhmuc = !open.danhmuc"
                 data-tooltip="Danh mục"
@@ -44,7 +44,7 @@
             <a href="{{ route('categories.index') }}"
                class="sidebar-child-item {{ str_starts_with($routeName ?? '', 'categories') ? 'active' : '' }}">
                 <span class="w-1 h-1 rounded-full bg-current opacity-40 flex-shrink-0"></span>
-                Ngành hàng
+                Danh mục sản phẩm
             </a>
             @endcan
             @can('view-products')
@@ -78,96 +78,71 @@
         </div>
     </div>
 
-    {{-- Phiếu NK/XK --}}
-    <div class="mt-0.5">
-        <button @click="open.phieu = !open.phieu"
-                data-tooltip="Phiếu NK/XK"
-                class="sidebar-nav-item {{ $activeModule === 'phieu' ? 'active' : '' }} justify-between">
-            <span class="flex items-center gap-2.5 min-w-0">
-                <i class="bi bi-file-earmark-text text-base w-5 text-center flex-shrink-0"></i>
-                <span class="nav-text">Phiếu NK / XK</span>
-            </span>
-            <i class="bi nav-chevron text-xs transition-transform duration-200 flex-shrink-0"
-               :class="open.phieu ? 'bi-chevron-down' : 'bi-chevron-right'"
-               style="color:var(--sidebar-text)"></i>
-        </button>
-        <div x-show="open.phieu"
-             x-transition:enter="transition ease-out duration-150"
-             x-transition:enter-start="opacity-0 -translate-y-1"
-             x-transition:enter-end="opacity-100 translate-y-0"
-             class="mt-0.5 space-y-0.5">
-            @can('view-transactions')
-            <a href="{{ route('transactions.index') }}"
-               class="sidebar-child-item {{ $routeName === 'transactions.index' && !request('type') && !request('status') ? 'active' : '' }}">
-                <span class="w-1 h-1 rounded-full bg-current opacity-40 flex-shrink-0"></span>
-                Tất cả phiếu
-            </a>
-            <a href="{{ route('transactions.index', ['type' => 'IN']) }}"
-               class="sidebar-child-item {{ $routeName === 'transactions.index' && request('type') === 'IN' ? 'active' : '' }}">
-                <span class="w-1 h-1 rounded-full bg-current opacity-40 flex-shrink-0"></span>
-                Phiếu nhập
-            </a>
-            <a href="{{ route('transactions.index', ['type' => 'OUT']) }}"
-               class="sidebar-child-item {{ $routeName === 'transactions.index' && request('type') === 'OUT' ? 'active' : '' }}">
-                <span class="w-1 h-1 rounded-full bg-current opacity-40 flex-shrink-0"></span>
-                Phiếu xuất
-            </a>
-            @if(\App\Models\Setting::get('require_approval', true))
-            <a href="{{ route('transactions.index', ['status' => 'pending']) }}"
-               class="sidebar-child-item {{ request('status') === 'pending' ? 'active' : '' }}">
-                <span class="w-1 h-1 rounded-full bg-current opacity-40 flex-shrink-0"></span>
-                Chờ duyệt
-            </a>
-            @endif
-            @endcan
-            @can('view-stocktakes')
-            <a href="{{ route('stocktakes.index') }}"
-               class="sidebar-child-item {{ str_starts_with($routeName ?? '', 'stocktakes') ? 'active' : '' }}">
-                <span class="w-1 h-1 rounded-full bg-current opacity-40 flex-shrink-0"></span>
-                Kiểm kê
-            </a>
-            @endcan
-        </div>
-    </div>
+    {{-- Giao dịch: Nhập / Xuất / Kiểm kê --}}
+    @canany(['view-transactions', 'view-stocktakes'])
+    @can('view-transactions')
+    <a href="{{ route('transactions.index', ['type' => 'IN']) }}"
+       data-tooltip="Nhập kho"
+       class="sidebar-nav-item mt-0.5 {{ $routeName === 'transactions.index' && request('type') === 'IN' ? 'active' : '' }}">
+        <i class="bi bi-arrow-down-circle text-base w-5 text-center flex-shrink-0"></i>
+        <span class="nav-text">Nhập kho</span>
+    </a>
 
-    {{-- Kho hàng --}}
-    <div class="mt-0.5">
-        <button @click="open.kho = !open.kho"
-                data-tooltip="Kho hàng"
-                class="sidebar-nav-item {{ $activeModule === 'kho' ? 'active' : '' }} justify-between">
-            <span class="flex items-center gap-2.5 min-w-0">
-                <i class="bi bi-archive text-base w-5 text-center flex-shrink-0"></i>
-                <span class="nav-text">Kho hàng</span>
-            </span>
-            <i class="bi nav-chevron text-xs transition-transform duration-200 flex-shrink-0"
-               :class="open.kho ? 'bi-chevron-down' : 'bi-chevron-right'"
-               style="color:var(--sidebar-text)"></i>
-        </button>
-        <div x-show="open.kho"
-             x-transition:enter="transition ease-out duration-150"
-             x-transition:enter-start="opacity-0 -translate-y-1"
-             x-transition:enter-end="opacity-100 translate-y-0"
-             class="mt-0.5 space-y-0.5">
-            @can('view-inventory')
-            <a href="{{ route('inventory.index') }}"
-               class="sidebar-child-item {{ $routeName === 'inventory.index' ? 'active' : '' }}">
-                <span class="w-1 h-1 rounded-full bg-current opacity-40 flex-shrink-0"></span>
-                Tồn kho
-            </a>
-            @endcan
-            @can('view-stock-ledger')
-            <a href="{{ route('stock-ledger.index') }}"
-               class="sidebar-child-item {{ $routeName === 'stock-ledger.index' ? 'active' : '' }}">
-                <span class="w-1 h-1 rounded-full bg-current opacity-40 flex-shrink-0"></span>
-                Thẻ kho
-            </a>
-            @endcan
-        </div>
-    </div>
+    <a href="{{ route('transactions.index', ['type' => 'OUT']) }}"
+       data-tooltip="Xuất kho"
+       class="sidebar-nav-item mt-0.5 {{ $routeName === 'transactions.index' && request('type') === 'OUT' ? 'active' : '' }}">
+        <i class="bi bi-arrow-up-circle text-base w-5 text-center flex-shrink-0"></i>
+        <span class="nav-text">Xuất kho</span>
+    </a>
 
-    {{-- Báo cáo --}}
+    @if(\App\Models\Setting::get('require_approval', true))
+    <a href="{{ route('transactions.index', ['status' => 'pending']) }}"
+       data-tooltip="Chờ duyệt"
+       class="sidebar-nav-item mt-0.5 {{ $routeName === 'transactions.index' && request('status') === 'pending' ? 'active' : '' }}">
+        <i class="bi bi-hourglass-split text-base w-5 text-center flex-shrink-0"></i>
+        <span class="nav-text">Chờ duyệt</span>
+    </a>
+    @endif
+    @endcan
+
+    @can('view-stocktakes')
+    <a href="{{ route('stocktakes.index') }}"
+       data-tooltip="Kiểm kê"
+       class="sidebar-nav-item mt-0.5 {{ str_starts_with($routeName ?? '', 'stocktakes') ? 'active' : '' }}">
+        <i class="bi bi-clipboard-check text-base w-5 text-center flex-shrink-0"></i>
+        <span class="nav-text">Kiểm kê</span>
+    </a>
+    @endcan
+    @endcanany
+
+    {{-- ── TỒN KHO ─────────────────────────────────────────── --}}
+    @canany(['view-inventory', 'view-stock-ledger'])
+    <p class="sidebar-section-label sidebar-section-divider">Tồn kho</p>
+
+    @can('view-inventory')
+    <a href="{{ route('inventory.index') }}"
+       data-tooltip="Tồn kho"
+       class="sidebar-nav-item {{ $routeName === 'inventory.index' ? 'active' : '' }}">
+        <i class="bi bi-boxes text-base w-5 text-center flex-shrink-0"></i>
+        <span class="nav-text">Tồn kho</span>
+    </a>
+    @endcan
+
+    @can('view-stock-ledger')
+    <a href="{{ route('stock-ledger.index') }}"
+       data-tooltip="Thẻ kho"
+       class="sidebar-nav-item mt-0.5 {{ $routeName === 'stock-ledger.index' ? 'active' : '' }}">
+        <i class="bi bi-journal-text text-base w-5 text-center flex-shrink-0"></i>
+        <span class="nav-text">Thẻ kho</span>
+    </a>
+    @endcan
+    @endcanany
+
+    {{-- ── BÁO CÁO ──────────────────────────────────────────── --}}
     @can('view-reports')
-    <div class="mt-0.5">
+    <p class="sidebar-section-label sidebar-section-divider">Báo cáo</p>
+
+    <div>
         <button @click="open.baocao = !open.baocao"
                 data-tooltip="Báo cáo"
                 class="sidebar-nav-item {{ $activeModule === 'baocao' ? 'active' : '' }} justify-between">
@@ -213,9 +188,9 @@
     </div>
     @endcan
 
-    {{-- Hệ thống --}}
+    {{-- ── HỆ THỐNG ─────────────────────────────────────────── --}}
     @canany(['manage-users', 'view-activity-logs', 'manage-settings'])
-    <p class="sidebar-section-label">Hệ thống</p>
+    <p class="sidebar-section-label sidebar-section-divider">Hệ thống</p>
 
     <div>
         <button @click="open.caidat = !open.caidat"

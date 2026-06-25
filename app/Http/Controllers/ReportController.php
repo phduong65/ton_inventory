@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\DestinationInventoryExport;
+use App\Exports\InternalDebtExport;
 use App\Exports\IssuesExport;
 use App\Exports\ReceiptsExport;
 use App\Exports\SummaryExport;
@@ -269,6 +270,17 @@ class ReportController extends Controller
         $to   = $request->date_to   ?? now()->format('Y-m-d');
 
         return Excel::download(new SummaryExport($request->all()), "nhap-xuat-ton-{$from}_{$to}.xlsx");
+    }
+
+    public function exportInternalDebt(Request $request): BinaryFileResponse
+    {
+        $month = $request->month ?? now()->month;
+        $year  = $request->year  ?? now()->year;
+
+        return Excel::download(
+            new InternalDebtExport(['month' => $month, 'year' => $year]),
+            "cong-no-noi-bo-{$year}-{$month}.xlsx"
+        );
     }
 
     public function destinationInventory(Request $request): View

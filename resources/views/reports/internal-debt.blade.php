@@ -28,6 +28,12 @@
         <button type="submit" class="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg self-end">
             <i class="bi bi-search mr-1"></i> Xem báo cáo
         </button>
+        @can('export-reports')
+        <a href="{{ route('reports.internal-debt.export', ['month' => $month, 'year' => $year]) }}"
+           class="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded-lg self-end">
+            <i class="ph ph-file-xls"></i> Xuất Excel
+        </a>
+        @endcan
     </form>
 
     {{-- Period label --}}

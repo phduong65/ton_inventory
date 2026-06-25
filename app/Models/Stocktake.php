@@ -11,7 +11,7 @@ use App\Models\Destination;
 class Stocktake extends Model
 {
     use HasFactory;
-    protected $fillable = ['code', 'status', 'created_by', 'approved_by', 'note', 'category_id', 'destination_id'];
+    protected $fillable = ['code', 'status', 'created_by', 'approved_by', 'note', 'rejected_reason', 'category_id', 'destination_id'];
 
     public function details(): HasMany
     {
@@ -38,7 +38,10 @@ class Stocktake extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
-    public function isPending(): bool { return $this->status === 'pending'; }
+    public function isDraft(): bool    { return $this->status === 'draft'; }
+    public function isPending(): bool  { return $this->status === 'pending'; }
+    public function isApproved(): bool { return $this->status === 'approved'; }
+    public function isRejected(): bool { return $this->status === 'rejected'; }
 
     public static function generateCode(): string
     {

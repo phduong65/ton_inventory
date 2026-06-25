@@ -10,12 +10,14 @@ $badge = match($stocktake->status) {
     'draft'    => 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
     'pending'  => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
     'approved' => 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    'rejected' => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
     default    => 'bg-gray-100 text-gray-500',
 };
 $label = match($stocktake->status) {
     'draft'    => 'Nháp',
     'pending'  => 'Chờ duyệt',
     'approved' => 'Đã duyệt',
+    'rejected' => 'Từ chối',
     default    => $stocktake->status,
 };
 @endphp
@@ -56,7 +58,12 @@ $label = match($stocktake->status) {
                     <i class="bi bi-arrow-left"></i> Danh sách
                 </a>
 
-                @if($stocktake->status === 'draft')
+                <a href="{{ route('stocktakes.print', $stocktake) }}" target="_blank"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <i class="bi bi-printer"></i> In
+                </a>
+
+                @if($stocktake->isDraft())
                     @can('create-stocktakes')
                     <form action="{{ route('stocktakes.submit', $stocktake) }}" method="POST">
                         @csrf
@@ -78,7 +85,7 @@ $label = match($stocktake->status) {
                     @endcan
                 @endif
 
-                @if($stocktake->status === 'pending')
+                @if($stocktake->isPending())
                     @can('approve-stocktakes')
                     <form action="{{ route('stocktakes.approve', $stocktake) }}" method="POST">
                         @csrf
@@ -88,9 +95,21 @@ $label = match($stocktake->status) {
                         </button>
                     </form>
                     @endcan
+                    @can('reject-stocktakes')
+                    <button x-data @click="$dispatch('open-reject-stocktake')"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-red-300 text-red-600 hover:bg-red-50 rounded-lg">
+                        <i class="bi bi-x-circle"></i> Từ chối
+                    </button>
+                    @endcan
                 @endif
             </div>
         </div>
+
+        @if($stocktake->isRejected() && $stocktake->rejected_reason)
+        <div class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+            <strong>Lý do từ chối:</strong> {{ $stocktake->rejected_reason }}
+        </div>
+        @endif
     </div>
 
     {{-- Flash messages --}}
@@ -190,4 +209,38 @@ $label = match($stocktake->status) {
         @endif
     </div>
 </div>
+
+{{-- Reject Stocktake Modal --}}
+<div x-data="{ open: false, reason: '' }"
+     x-on:open-reject-stocktake.window="open = true"
+     x-show="open"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+     x-cloak>
+    <div @click.outside="open = false"
+         class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-4">Từ chối phiếu kiểm kê</h3>
+        <form action="{{ route('stocktakes.reject', $stocktake) }}" method="POST">
+            @csrf
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Lý do từ chối <span class="text-red-500">*</span>
+                </label>
+                <textarea name="reason" x-model="reason" rows="3" required
+                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                    placeholder="Nhập lý do từ chối..."></textarea>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button type="button" @click="open = false"
+                    class="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                    Hủy
+                </button>
+                <button type="submit" :disabled="!reason.trim()"
+                    class="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+                    Xác nhận từ chối
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endsection

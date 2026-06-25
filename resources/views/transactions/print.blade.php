@@ -33,8 +33,22 @@
     </style>
 </head>
 <body>
+@php
+    $companyName    = \App\Models\Setting::get('company_name', 'CÔNG TY F&B');
+    $companyAddress = \App\Models\Setting::get('company_address', '');
+    $companyPhone   = \App\Models\Setting::get('company_phone', '');
+    $companyTaxCode = \App\Models\Setting::get('company_tax_code', '');
+@endphp
     <div class="header">
-        <p style="font-size:12px">CÔNG TY F&B — KHO TỔNG (KHO 40)</p>
+        <p style="font-size:12px; font-weight:bold">{{ strtoupper($companyName ?: 'CÔNG TY F&B') }}</p>
+        @if($companyAddress)<p style="font-size:11px">{{ $companyAddress }}</p>@endif
+        @if($companyPhone || $companyTaxCode)
+        <p style="font-size:11px">
+            @if($companyPhone)ĐT: {{ $companyPhone }}@endif
+            @if($companyPhone && $companyTaxCode) &nbsp;|&nbsp; @endif
+            @if($companyTaxCode)MST: {{ $companyTaxCode }}@endif
+        </p>
+        @endif
         <h1>{{ $transaction->type === 'IN' ? 'PHIẾU NHẬP KHO' : 'PHIẾU XUẤT KHO' }}</h1>
         <h2>Số: {{ $transaction->code }}</h2>
     </div>

@@ -5,7 +5,54 @@
 @section('breadcrumb', 'Hệ thống / Cài đặt')
 
 @section('content')
-<div class="max-w-2xl">
+<div class="max-w-2xl space-y-5">
+
+    {{-- Thông tin công ty --}}
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Thông tin công ty</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Hiển thị trên phiếu in nhập/xuất kho và kiểm kê</p>
+        </div>
+        <div class="px-6 py-4">
+            <form action="{{ route('settings.update') }}" method="POST" class="space-y-4">
+                @csrf @method('PUT')
+                <input type="hidden" name="require_approval" value="{{ $requireApproval ? '1' : '0' }}">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tên công ty</label>
+                        <input type="text" name="company_name" value="{{ old('company_name', $companyName) }}"
+                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                               placeholder="VD: Công ty TNHH F&B Việt Nam">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mã số thuế</label>
+                        <input type="text" name="company_tax_code" value="{{ old('company_tax_code', $companyTaxCode) }}"
+                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                               placeholder="0123456789">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số điện thoại</label>
+                        <input type="text" name="company_phone" value="{{ old('company_phone', $companyPhone) }}"
+                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                               placeholder="028 1234 5678">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Địa chỉ</label>
+                        <input type="text" name="company_address" value="{{ old('company_address', $companyAddress) }}"
+                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                               placeholder="123 Đường ABC, Quận 1, TP.HCM">
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg">
+                        Lưu thông tin
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Quy trình phiếu --}}
     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
 
         <div class="px-6 py-4">
