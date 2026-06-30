@@ -9,6 +9,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Dev\TestRunnerController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\QuickCreateController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SettingController;
@@ -60,6 +61,12 @@ Route::middleware('auth')->group(function () {
     Route::resource('suppliers', SupplierController::class)
         ->except(['create', 'edit', 'show'])
         ->middleware('can:view-suppliers');
+
+    // Quick-add (JSON endpoints dùng từ form nhập/xuất kho)
+    Route::post('quick/products', [QuickCreateController::class, 'storeProduct'])
+        ->name('quick.products.store')->middleware('can:create-products');
+    Route::post('quick/suppliers', [QuickCreateController::class, 'storeSupplier'])
+        ->name('quick.suppliers.store')->middleware('can:create-suppliers');
 
     // Kho nhận hàng
     Route::resource('destinations', DestinationController::class)

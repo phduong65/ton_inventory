@@ -34,6 +34,8 @@
     window.__txFormData  = @json($productsUnitData);
     window.__txInitRows  = @json($initialRows);
     window.__txNextId    = {{ $transaction->details->count() + 1 }};
+    window.__quickProductUrl  = '{{ route("quick.products.store") }}';
+    window.__quickSupplierUrl = '{{ route("quick.suppliers.store") }}';
 
     window.createForm = function(productsData) {
         return {
@@ -150,6 +152,101 @@
             paletteMoveDown() { if (this.palette.focusIdx < this.palette.results.length - 1) { this.palette.focusIdx++; this.$nextTick(() => document.querySelector('.cp-focused')?.scrollIntoView({ block:'nearest' })); } },
             paletteMoveUp()   { if (this.palette.focusIdx > 0) { this.palette.focusIdx--; this.$nextTick(() => document.querySelector('.cp-focused')?.scrollIntoView({ block:'nearest' })); } },
             paletteConfirm()  { const item = this.palette.results[this.palette.focusIdx] ?? (this.palette.results.length === 1 ? this.palette.results[0] : null); if (item) this.selectFromPalette(item); },
+
+            // ── Quick-add ─────────────────────────────────────────────────────
+            quickProduct:  { open: false, saving: false, name: '', sku: '', unit_id: '', category_id: '', default_price: '', targetRowId: null, errors: {} },
+            quickSupplier: { open: false, saving: false, name: '', code: '', phone: '', email: '', errors: {} },
+
+            openQuickProduct() {
+                const term     = this.palette.search.trim();
+                const targetId = this.palette.targetRowId;
+                this.closePalette();
+                this.quickProduct.name          = term;
+                this.quickProduct.targetRowId   = targetId;
+                this.quickProduct.sku           = '';
+                this.quickProduct.unit_id       = '';
+                this.quickProduct.category_id   = '';
+                this.quickProduct.default_price = '';
+                this.quickProduct.errors        = {};
+                this.quickProduct.open          = true;
+            },
+            saveQuickProduct() {
+                if (this.quickProduct.saving) return;
+                this.quickProduct.saving = true;
+                this.quickProduct.errors = {};
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+                fetch(window.__quickProductUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        name:          this.quickProduct.name,
+                        sku:           this.quickProduct.sku          || null,
+                        unit_id:       this.quickProduct.unit_id      || null,
+                        category_id:   this.quickProduct.category_id  || null,
+                        default_price: this.quickProduct.default_price || null,
+                    }),
+                })
+                .then(r => r.json().then(data => ({ ok: r.ok, data })))
+                .then(({ ok, data }) => {
+                    if (ok) {
+                        this.productsData[data.id] = data;
+                        const rowId = this.quickProduct.targetRowId;
+                        this.quickProduct.open = false;
+                        this.$nextTick(() => {
+                            const row = this.rows.find(r => r.id === rowId);
+                            if (row) {
+                                row.product_id = data.id;
+                                this.onProductChange(row);
+                                this.$nextTick(() => {
+                                    const idx = this.rows.findIndex(r => r.id === rowId);
+                                    const el  = document.querySelector(`input[name="details[${idx}][qty]"]`);
+                                    if (el) { el.focus(); el.select(); }
+                                });
+                            }
+                        });
+                    } else {
+                        this.quickProduct.errors = data.errors || {};
+                    }
+                    this.quickProduct.saving = false;
+                })
+                .catch(() => { this.quickProduct.saving = false; });
+            },
+            openQuickSupplier() {
+                this.quickSupplier.name   = '';
+                this.quickSupplier.code   = '';
+                this.quickSupplier.phone  = '';
+                this.quickSupplier.email  = '';
+                this.quickSupplier.errors = {};
+                this.quickSupplier.open   = true;
+            },
+            saveQuickSupplier() {
+                if (this.quickSupplier.saving) return;
+                this.quickSupplier.saving = true;
+                this.quickSupplier.errors = {};
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+                fetch(window.__quickSupplierUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        name:  this.quickSupplier.name,
+                        code:  this.quickSupplier.code  || null,
+                        phone: this.quickSupplier.phone || null,
+                        email: this.quickSupplier.email || null,
+                    }),
+                })
+                .then(r => r.json().then(data => ({ ok: r.ok, data })))
+                .then(({ ok, data }) => {
+                    if (ok) {
+                        const sel = document.getElementById('supplier-select');
+                        if (sel) { sel.add(new Option(data.name, data.id, true, true)); }
+                        this.quickSupplier.open = false;
+                    } else {
+                        this.quickSupplier.errors = data.errors || {};
+                    }
+                    this.quickSupplier.saving = false;
+                })
+                .catch(() => { this.quickSupplier.saving = false; });
+            },
         };
     };
 </script>
@@ -200,14 +297,21 @@
                     @if($type === 'IN')
                     <div style="flex:2; min-width:200px">
                         <label class="create-label">Nhà cung cấp <span style="color:#ef4444">*</span></label>
-                        <select name="supplier_id" required class="create-sidebar-input">
-                            <option value="">Chọn nhà cung cấp...</option>
-                            @foreach($suppliers as $s)
-                            <option value="{{ $s->id }}" {{ old('supplier_id', $transaction->supplier_id) == $s->id ? 'selected' : '' }}>
-                                {{ $s->name }}
-                            </option>
-                            @endforeach
-                        </select>
+                        <div style="display:flex; gap:6px; align-items:stretch">
+                            <select id="supplier-select" name="supplier_id" required class="create-sidebar-input" style="flex:1; min-width:0">
+                                <option value="">Chọn nhà cung cấp...</option>
+                                @foreach($suppliers as $s)
+                                <option value="{{ $s->id }}" {{ old('supplier_id', $transaction->supplier_id) == $s->id ? 'selected' : '' }}>
+                                    {{ $s->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                            @can('create-suppliers')
+                            <button type="button" @click="openQuickSupplier()" title="Thêm nhà cung cấp mới" class="quick-add-btn">
+                                <i class="bi bi-plus-lg" style="font-size:13px"></i>
+                            </button>
+                            @endcan
+                        </div>
                     </div>
                     @else
                     <div style="flex:2; min-width:200px">
@@ -387,7 +491,17 @@
             </div>
             <div id="cp-list" class="cp-list">
                 <template x-if="palette.results.length === 0">
-                    <div class="cp-empty"><i class="bi bi-search"></i> Không tìm thấy sản phẩm</div>
+                    <div class="cp-empty">
+                        <i class="bi bi-search"></i>
+                        Không tìm thấy sản phẩm
+                        @can('create-products')
+                        <button type="button" @click="openQuickProduct()"
+                                style="margin-top:10px; font-size:12.5px; font-weight:600; padding:6px 14px; border-radius:8px; background:rgba(22,163,74,.1); color:#16a34a; border:1px solid rgba(22,163,74,.25); cursor:pointer; display:inline-flex; align-items:center; gap:5px">
+                            <i class="bi bi-plus-lg" style="font-size:11px"></i>
+                            Thêm "<span x-text="palette.search"></span>"
+                        </button>
+                        @endcan
+                    </div>
                 </template>
                 <template x-for="(p, idx) in palette.results" :key="p.id">
                     <button type="button" class="cp-item"
@@ -412,10 +526,161 @@
             <div class="cp-footer">
                 <span class="cp-count"><span x-text="palette.results.length"></span> sản phẩm</span>
                 <div class="cp-hints">
+                    @can('create-products')
+                    <button type="button" @click="openQuickProduct()" title="Thêm sản phẩm mới"
+                            style="font-size:11.5px; font-weight:600; padding:3px 10px; border-radius:6px; background:rgba(22,163,74,.1); color:#16a34a; border:1px solid rgba(22,163,74,.2); cursor:pointer; display:inline-flex; align-items:center; gap:4px; line-height:1.6">
+                        <i class="bi bi-plus-lg" style="font-size:10px"></i> Thêm mới
+                    </button>
+                    @endcan
                     <span class="cp-hint"><kbd>↑↓</kbd> di chuyển</span>
                     <span class="cp-hint"><kbd>↵</kbd> chọn</span>
                     <span class="cp-hint"><kbd>ESC</kbd> đóng</span>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Quick-add Product Modal --}}
+    <div x-show="quickProduct.open"
+         x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-100"
+         x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+         class="fixed inset-0 z-[300] flex items-center justify-center p-4"
+         @keydown.escape.window="if(quickProduct.open) { quickProduct.open = false; $event.stopPropagation(); }"
+         style="display:none">
+        <div class="absolute inset-0 bg-black/50" @click="quickProduct.open = false"></div>
+        <div class="relative rounded-xl shadow-2xl w-full max-w-md p-6" style="background:var(--surface-card); border:1px solid var(--surface-border)">
+            <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-2">
+                    <div style="width:28px; height:28px; border-radius:8px; background:rgba(22,163,74,.12); display:flex; align-items:center; justify-content:center">
+                        <i class="bi bi-box-seam" style="font-size:13px; color:#16a34a"></i>
+                    </div>
+                    <h3 style="font-size:15px; font-weight:700; color:var(--text-primary)">Thêm sản phẩm mới</h3>
+                </div>
+                <button type="button" @click="quickProduct.open = false"
+                        style="width:28px; height:28px; border-radius:6px; border:none; background:var(--surface-bg); color:var(--text-muted); cursor:pointer; display:flex; align-items:center; justify-content:center">
+                    <i class="bi bi-x-lg" style="font-size:12px"></i>
+                </button>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:12px">
+                <div>
+                    <label class="create-label">Tên sản phẩm <span style="color:#ef4444">*</span></label>
+                    <input type="text" x-model="quickProduct.name" class="create-sidebar-input"
+                           placeholder="Nhập tên sản phẩm..."
+                           @keydown.enter.prevent="saveQuickProduct()">
+                    <p x-show="quickProduct.errors.name" class="text-xs mt-1" style="color:#ef4444"
+                       x-text="(quickProduct.errors.name||[])[0]"></p>
+                </div>
+                <div>
+                    <label class="create-label">Đơn vị tính <span style="color:#ef4444">*</span></label>
+                    <select x-model="quickProduct.unit_id" class="create-sidebar-input">
+                        <option value="">Chọn đơn vị...</option>
+                        @foreach($units as $u)
+                        <option value="{{ $u->id }}">{{ $u->name }}</option>
+                        @endforeach
+                    </select>
+                    <p x-show="quickProduct.errors.unit_id" class="text-xs mt-1" style="color:#ef4444"
+                       x-text="(quickProduct.errors.unit_id||[])[0]"></p>
+                </div>
+                <div>
+                    <label class="create-label">Danh mục</label>
+                    <select x-model="quickProduct.category_id" class="create-sidebar-input">
+                        <option value="">Không có</option>
+                        @foreach($categories as $c)
+                        <option value="{{ $c->id }}">{{ $c->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div style="display:flex; gap:12px">
+                    <div style="flex:1">
+                        <label class="create-label">SKU <span style="font-weight:400; color:var(--text-muted)">(tự tạo nếu trống)</span></label>
+                        <input type="text" x-model="quickProduct.sku" class="create-sidebar-input" placeholder="VD: SP-001"
+                               @keydown.enter.prevent="saveQuickProduct()">
+                        <p x-show="quickProduct.errors.sku" class="text-xs mt-1" style="color:#ef4444"
+                           x-text="(quickProduct.errors.sku||[])[0]"></p>
+                    </div>
+                    <div style="flex:1">
+                        <label class="create-label">Giá mặc định</label>
+                        <input type="number" x-model="quickProduct.default_price" class="create-sidebar-input"
+                               min="0" step="1000" placeholder="0"
+                               @keydown.enter.prevent="saveQuickProduct()">
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px">
+                <button type="button" @click="quickProduct.open = false" class="btn-ghost">Hủy</button>
+                <button type="button" @click="saveQuickProduct()" :disabled="quickProduct.saving" class="btn-primary">
+                    <template x-if="quickProduct.saving"><i class="bi bi-hourglass-split" style="font-size:11px"></i></template>
+                    <template x-if="!quickProduct.saving"><i class="bi bi-plus-lg" style="font-size:11px"></i></template>
+                    <span x-text="quickProduct.saving ? 'Đang lưu...' : 'Thêm sản phẩm'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Quick-add Supplier Modal --}}
+    <div x-show="quickSupplier.open"
+         x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-100"
+         x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+         class="fixed inset-0 z-[300] flex items-center justify-center p-4"
+         @keydown.escape.window="if(quickSupplier.open) { quickSupplier.open = false; $event.stopPropagation(); }"
+         style="display:none">
+        <div class="absolute inset-0 bg-black/50" @click="quickSupplier.open = false"></div>
+        <div class="relative rounded-xl shadow-2xl w-full max-w-md p-6" style="background:var(--surface-card); border:1px solid var(--surface-border)">
+            <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-2">
+                    <div style="width:28px; height:28px; border-radius:8px; background:rgba(59,130,246,.12); display:flex; align-items:center; justify-content:center">
+                        <i class="bi bi-building" style="font-size:13px; color:#3b82f6"></i>
+                    </div>
+                    <h3 style="font-size:15px; font-weight:700; color:var(--text-primary)">Thêm nhà cung cấp</h3>
+                </div>
+                <button type="button" @click="quickSupplier.open = false"
+                        style="width:28px; height:28px; border-radius:6px; border:none; background:var(--surface-bg); color:var(--text-muted); cursor:pointer; display:flex; align-items:center; justify-content:center">
+                    <i class="bi bi-x-lg" style="font-size:12px"></i>
+                </button>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:12px">
+                <div>
+                    <label class="create-label">Tên nhà cung cấp <span style="color:#ef4444">*</span></label>
+                    <input type="text" x-model="quickSupplier.name" class="create-sidebar-input"
+                           placeholder="Nhập tên nhà cung cấp..."
+                           @keydown.enter.prevent="saveQuickSupplier()">
+                    <p x-show="quickSupplier.errors.name" class="text-xs mt-1" style="color:#ef4444"
+                       x-text="(quickSupplier.errors.name||[])[0]"></p>
+                </div>
+                <div>
+                    <label class="create-label">Mã NCC <span style="font-weight:400; color:var(--text-muted)">(tự tạo nếu trống)</span></label>
+                    <input type="text" x-model="quickSupplier.code" class="create-sidebar-input"
+                           placeholder="VD: NCC-001"
+                           @keydown.enter.prevent="saveQuickSupplier()">
+                    <p x-show="quickSupplier.errors.code" class="text-xs mt-1" style="color:#ef4444"
+                       x-text="(quickSupplier.errors.code||[])[0]"></p>
+                </div>
+                <div style="display:flex; gap:12px">
+                    <div style="flex:1">
+                        <label class="create-label">Điện thoại</label>
+                        <input type="text" x-model="quickSupplier.phone" class="create-sidebar-input"
+                               placeholder="0912 345 678"
+                               @keydown.enter.prevent="saveQuickSupplier()">
+                    </div>
+                    <div style="flex:1">
+                        <label class="create-label">Email</label>
+                        <input type="email" x-model="quickSupplier.email" class="create-sidebar-input"
+                               placeholder="ncc@email.com"
+                               @keydown.enter.prevent="saveQuickSupplier()">
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px">
+                <button type="button" @click="quickSupplier.open = false" class="btn-ghost">Hủy</button>
+                <button type="button" @click="saveQuickSupplier()" :disabled="quickSupplier.saving" class="btn-primary">
+                    <template x-if="quickSupplier.saving"><i class="bi bi-hourglass-split" style="font-size:11px"></i></template>
+                    <template x-if="!quickSupplier.saving"><i class="bi bi-plus-lg" style="font-size:11px"></i></template>
+                    <span x-text="quickSupplier.saving ? 'Đang lưu...' : 'Thêm nhà cung cấp'"></span>
+                </button>
             </div>
         </div>
     </div>
@@ -442,4 +707,50 @@
         </div>
     </div>
 </form>
+
+<style>
+    .btn-icon { width:32px; height:32px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; background:var(--surface-card); border:1px solid var(--surface-border); color:var(--text-muted); text-decoration:none; transition:background .15s; flex-shrink:0; }
+    .btn-icon:hover { background:var(--surface-bg); }
+    .type-badge { font-size:11px; font-weight:700; padding:3px 10px; border-radius:6px; letter-spacing:.06em; text-transform:uppercase; }
+    .type-in  { background:rgba(22,163,74,.10); color:#16a34a; }
+    .type-out { background:rgba(249,115,22,.10); color:#ea580c; }
+    .btn-ghost { font-size:13.5px; padding:7px 14px; border-radius:8px; color:var(--text-secondary); text-decoration:none; background:transparent; border:none; cursor:pointer; transition:background .15s; white-space:nowrap; }
+    .btn-ghost:hover { background:var(--surface-bg); }
+    .btn-primary { font-size:13.5px; font-weight:600; padding:7px 16px; border-radius:8px; color:#fff; background:#16a34a; border:none; cursor:pointer; transition:background .15s; display:inline-flex; align-items:center; gap:6px; box-shadow:0 1px 3px rgba(22,163,74,.3); white-space:nowrap; }
+    .btn-primary:hover { background:#15803d; }
+    .create-action-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+    .create-action-left { display:flex; align-items:center; gap:10px; min-width:0; }
+    .create-action-subtitle { font-size:14px; font-weight:500; color:var(--text-secondary); white-space:nowrap; }
+    .create-action-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+    .btn-add-row { font-size:12px; font-weight:600; padding:5px 12px; border-radius:7px; background:rgba(22,163,74,.08); color:#16a34a; border:1px solid rgba(22,163,74,.2); cursor:pointer; transition:background .15s; display:inline-flex; align-items:center; gap:5px; }
+    .btn-add-row:hover { background:rgba(22,163,74,.15); }
+    .create-card { background:var(--surface-card); border:1px solid var(--surface-border); border-radius:12px; overflow:hidden; }
+    .create-card-header { display:flex; align-items:center; gap:10px; padding:12px 20px; border-bottom:1px solid var(--surface-border); }
+    .create-accent-bar { width:3px; height:16px; border-radius:2px; background:#16a34a; flex-shrink:0; }
+    .create-row { transition:background .1s; }
+    .create-row:hover { background:var(--surface-bg); }
+    .create-row-num { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; font-size:11px; font-weight:600; background:var(--surface-bg); border:1px solid var(--surface-border); color:var(--text-muted); transition:all .15s; }
+    .create-row:hover .create-row-num { background:rgba(22,163,74,.08); border-color:rgba(22,163,74,.3); color:#16a34a; }
+    .create-table-input,.create-table-select { width:100%; background:transparent; border:none; border-bottom:1.5px solid var(--surface-border); color:var(--text-primary); font-size:13.5px; padding:4px 2px 5px; outline:none; transition:border-color .15s; border-radius:0; cursor:pointer; }
+    button.create-table-select { min-height:29px; }
+    .create-table-input:focus,.create-table-select:focus { border-bottom-color:#16a34a; }
+    .create-table-input::placeholder { color:var(--text-muted); }
+    .create-table-select:disabled { opacity:.5; cursor:not-allowed; }
+    .dark .create-table-input,.dark .create-table-select { background:transparent !important; border-color:var(--surface-border) !important; color:var(--text-primary) !important; }
+    .create-delete-btn { width:24px; height:24px; border-radius:6px; border:none; display:flex; align-items:center; justify-content:center; background:transparent; color:var(--text-muted); cursor:pointer; opacity:0; transition:opacity .15s,background .15s,color .15s; margin:0 auto; }
+    .create-row:hover .create-delete-btn { opacity:1; }
+    .create-delete-btn:hover { background:#fee2e2; color:#dc2626; }
+    .dark .create-delete-btn:hover { background:rgba(220,38,38,.2); }
+    .create-label { display:block; font-size:11.5px; font-weight:500; color:var(--text-secondary); margin-bottom:6px; letter-spacing:.01em; }
+    .create-sidebar-input { width:100%; padding:8px 10px; font-size:13.5px; border-radius:8px; outline:none; transition:border-color .15s,box-shadow .15s; background:var(--surface-bg); border:1.5px solid var(--surface-border); color:var(--text-primary); }
+    .create-sidebar-input:focus { border-color:#16a34a; box-shadow:0 0 0 3px rgba(22,163,74,.10); }
+    .dark .create-sidebar-input { background:rgba(0,0,0,.2) !important; border-color:var(--surface-border) !important; color:var(--text-primary) !important; }
+    .quick-add-btn { flex-shrink:0; width:36px; height:36px; border-radius:8px; border:1.5px solid rgba(22,163,74,.35); background:rgba(22,163,74,.08); color:#16a34a; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s,border-color .15s; }
+    .quick-add-btn:hover { background:rgba(22,163,74,.18); border-color:rgba(22,163,74,.6); }
+    @media (max-width: 640px) {
+        .create-action-subtitle { display:none; }
+        .btn-ghost { display:none; }
+        .create-action-right { gap:6px; }
+    }
+</style>
 @endsection

@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreTransactionRequest;
+use App\Models\Category;
 use App\Models\Destination;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\Transaction;
 use App\Models\TransactionAttachment;
 use App\Models\TransactionDetail;
+use App\Models\Unit;
 use App\Services\TransactionService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\RedirectResponse;
@@ -40,6 +42,8 @@ class TransactionController extends Controller
         $suppliers    = Supplier::orderBy('name')->get();
         $destinations = Destination::all();
         $products     = Product::active()->with(['category', 'unit', 'inventory', 'unitConversions.unit'])->orderBy('name')->get();
+        $categories   = Category::orderBy('name')->get();
+        $units        = Unit::orderBy('name')->get();
 
         // Dữ liệu sản phẩm nhúng vào JS cho command palette + quy đổi đơn vị
         $productsUnitData = $products->mapWithKeys(fn($p) => [
@@ -59,7 +63,7 @@ class TransactionController extends Controller
             ],
         ]);
 
-        return view('transactions.create', compact('type', 'suppliers', 'destinations', 'products', 'productsUnitData'));
+        return view('transactions.create', compact('type', 'suppliers', 'destinations', 'products', 'productsUnitData', 'categories', 'units'));
     }
 
     public function store(StoreTransactionRequest $request): RedirectResponse
@@ -143,6 +147,8 @@ class TransactionController extends Controller
         $suppliers    = Supplier::orderBy('name')->get();
         $destinations = Destination::all();
         $products     = Product::active()->with(['category', 'unit', 'inventory', 'unitConversions.unit'])->orderBy('name')->get();
+        $categories   = Category::orderBy('name')->get();
+        $units        = Unit::orderBy('name')->get();
 
         $productsUnitData = $products->mapWithKeys(fn ($p) => [
             $p->id => [
@@ -161,7 +167,7 @@ class TransactionController extends Controller
             ],
         ]);
 
-        return view('transactions.edit', compact('transaction', 'type', 'suppliers', 'destinations', 'products', 'productsUnitData'));
+        return view('transactions.edit', compact('transaction', 'type', 'suppliers', 'destinations', 'products', 'productsUnitData', 'categories', 'units'));
     }
 
     public function update(Request $request, Transaction $transaction): RedirectResponse
