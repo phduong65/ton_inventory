@@ -7,13 +7,13 @@
 @section('content')
 
 @if(session('error'))
-<div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+<div class="mb-4 rounded-xl px-4 py-3 text-sm" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);color:#dc2626">
     {{ session('error') }}
 </div>
 @endif
 
 @if($errors->any())
-<div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+<div class="mb-4 rounded-xl px-4 py-3 text-sm" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);color:#dc2626">
     <ul class="list-disc list-inside space-y-1">
         @foreach($errors->all() as $error)
         <li>{{ $error }}</li>
@@ -31,7 +31,7 @@
     @endif
 
     {{-- ── Action bar ──────────────────────────────────────────────── --}}
-    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 mb-4">
+    <div class="rounded-2xl px-4 py-3 mb-4" style="background:var(--surface-card);border:1px solid var(--surface-border);box-shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04)">
         <div class="flex items-center justify-between gap-3 flex-wrap">
 
             {{-- Left: back + badge + ghi chú --}}
@@ -68,8 +68,8 @@
 
         {{-- Category scope selector — chỉ hiện ở chế độ Kho Tổng --}}
         @if(!$destination)
-        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex items-center gap-2 flex-wrap">
-            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide flex-shrink-0">Phạm vi:</span>
+        <div class="mt-3 pt-3 flex items-center gap-2 flex-wrap" style="border-top:1px solid var(--surface-border)">
+            <span class="text-xs font-semibold uppercase tracking-wide flex-shrink-0" style="color:var(--text-muted)">Phạm vi:</span>
             <label class="kk-scope-btn">
                 <input type="radio" name="category_id" value="" x-model="selectedCategoryId" style="display:none">
                 <span :class="selectedCategoryId === '' ? 'kk-scope-active' : ''">

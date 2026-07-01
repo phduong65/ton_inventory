@@ -6,116 +6,113 @@
 
 @section('content')
 
-{{-- ── Warehouse Tabs ──────────────────────────────────────────── --}}
-<div class="flex items-center gap-1 mb-4 p-1 rounded-xl w-fit flex-wrap"
-     style="background:var(--surface-card); border:1px solid var(--surface-border)">
-    <a href="{{ route('reports.inventory', request()->except(['destination_id', 'page'])) }}"
-       class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150
-              {{ !request('destination_id') ? 'text-white shadow-sm' : 'hover:opacity-80' }}"
-       style="{{ !request('destination_id') ? 'background:#4f46e5; color:#fff' : 'color:var(--text-secondary)' }}">
-        <i class="bi bi-building text-sm"></i>
-        <span>Kho Tổng (40)</span>
+{{-- ── Warehouse Tabs ────────────────────────────────────── --}}
+<div class="flex items-center gap-1 mb-5 p-1 rounded-xl w-fit flex-wrap"
+     style="background:var(--surface-card);border:1px solid var(--surface-border)">
+    <a href="{{ route('reports.inventory', request()->except(['destination_id','page'])) }}"
+       class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150"
+       style="{{ !request('destination_id') ? 'background:#4f46e5;color:#fff' : 'color:var(--text-secondary)' }}">
+        <i class="bi bi-building text-sm"></i> Kho Tổng (40)
     </a>
     @foreach($destinations as $dest)
     <a href="{{ route('reports.inventory', array_merge(request()->except(['destination_id','page']), ['destination_id' => $dest->id])) }}"
-       class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150
-              {{ request('destination_id') == $dest->id ? 'text-white shadow-sm' : 'hover:opacity-80' }}"
-       style="{{ request('destination_id') == $dest->id ? 'background:#4f46e5; color:#fff' : 'color:var(--text-secondary)' }}">
-        <i class="bi bi-box-seam text-sm"></i>
-        <span>{{ $dest->name }}</span>
+       class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150"
+       style="{{ request('destination_id') == $dest->id ? 'background:#4f46e5;color:#fff' : 'color:var(--text-secondary)' }}">
+        <i class="bi bi-box-seam text-sm"></i> {{ $dest->name }}
     </a>
     @endforeach
 </div>
 
-<div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+<div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden"
+     style="box-shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04)">
 
-    {{-- ── Filter ──────────────────────────────────────────────────── --}}
-    <form method="GET" class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-3 items-end">
+    {{-- Filter --}}
+    <form method="GET" class="p-4 flex flex-wrap gap-3 items-end" style="border-bottom:1px solid var(--surface-border)">
         @if(request('destination_id'))
         <input type="hidden" name="destination_id" value="{{ request('destination_id') }}">
         @endif
         <div class="flex flex-col gap-1">
-            <label class="text-xs text-gray-500 dark:text-gray-400">Tồn tại ngày</label>
+            <label class="text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">Tồn tại ngày</label>
             <x-date-picker name="as_of" :value="$asOf" max-date="today" class="w-40" placeholder="Chọn ngày" />
         </div>
-        <div class="flex gap-2">
-            <button type="submit" class="px-4 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg">
-                <i class="bi bi-search mr-1"></i> Xem báo cáo
+        <div class="flex gap-2 self-end">
+            <button type="submit" class="h-9 px-4 text-sm font-medium text-white rounded-xl transition-colors"
+                    style="background:#4f46e5" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">
+                <i class="ph ph-magnifying-glass mr-1"></i> Xem báo cáo
             </button>
             @can('export-reports')
             <a href="{{ route('inventory.export', request()->query()) }}"
-               class="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-1">
-                <i class="bi bi-file-earmark-excel"></i> Excel
+               class="h-9 px-4 inline-flex items-center gap-1.5 text-sm font-medium text-white rounded-xl transition-colors"
+               style="background:#16a34a" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">
+                <i class="ph ph-file-xls text-base"></i> Excel
             </a>
             @endcan
         </div>
     </form>
 
-    {{-- ── Info bar ─────────────────────────────────────────────────── --}}
-    <div class="px-4 py-2.5 bg-green-50 dark:bg-green-900/20 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between text-sm">
-        <span class="text-green-700 dark:text-green-400 flex items-center gap-1.5">
-            <i class="bi bi-calendar3"></i>
+    {{-- Info bar --}}
+    <div class="px-5 py-2.5 flex items-center justify-between text-sm" style="background:rgba(16,185,129,0.06);border-bottom:1px solid var(--surface-border)">
+        <div class="flex items-center gap-2" style="color:#059669">
+            <i class="ph ph-calendar-blank text-sm"></i>
             @if(request('destination_id'))
-                Lũy kế xuất đến {{ $activeDestination?->name }}
+            <span>Lũy kế xuất đến {{ $activeDestination?->name }}</span>
             @elseif($asOf >= $today)
-                Tồn kho hiện tại — Kho Tổng (40)
+            <span>Tồn kho hiện tại — Kho Tổng (40)</span>
             @else
-                Tồn kho tại ngày {{ \Carbon\Carbon::parse($asOf)->format('d/m/Y') }} — Kho Tổng (40)
+            <span>Tồn kho tại ngày {{ \Carbon\Carbon::parse($asOf)->format('d/m/Y') }} — Kho Tổng (40)</span>
             @endif
-        </span>
-        <span class="font-semibold text-green-700 dark:text-green-400">
-            Tổng giá trị: {{ number_format($totalValue, 0, ',', '.') }}đ
-        </span>
+        </div>
+        <span class="font-semibold" style="color:#059669">Tổng giá trị: {{ number_format($totalValue, 0, ',', '.') }}đ</span>
     </div>
 
-    {{-- ── Table ───────────────────────────────────────────────────── --}}
+    {{-- Table --}}
     @php $rows = request('destination_id') ? ($destItems ?? collect()) : ($items ?? collect()); @endphp
     <div class="overflow-x-auto">
         <table class="w-full text-sm text-left whitespace-nowrap">
-            <thead class="bg-gray-50 dark:bg-gray-700 text-xs text-gray-500 dark:text-gray-400 uppercase">
-                <tr>
-                    <th class="px-4 py-3">SKU</th>
-                    <th class="px-4 py-3">Sản phẩm</th>
-                    <th class="px-4 py-3">Danh mục</th>
-                    <th class="px-4 py-3">ĐVT</th>
-                    <th class="px-4 py-3 text-right">
-                        {{ request('destination_id') ? 'SL lũy kế' : 'SL tồn' }}
-                    </th>
-                    <th class="px-4 py-3 text-right">Giá vốn TB</th>
-                    <th class="px-4 py-3 text-right">Giá trị</th>
+            <thead>
+                <tr style="background:var(--surface-bg);border-bottom:1px solid var(--surface-border)">
+                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">SKU</th>
+                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">Sản phẩm</th>
+                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">Danh mục</th>
+                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">ĐVT</th>
+                    <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">{{ request('destination_id') ? 'SL lũy kế' : 'SL tồn' }}</th>
+                    <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">Giá vốn TB</th>
+                    <th class="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">Giá trị</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+            <tbody>
                 @forelse($rows as $item)
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td class="px-4 py-2.5 font-mono text-xs text-gray-500">{{ $item->product?->sku ?? '—' }}</td>
-                    <td class="px-4 py-2.5 font-medium text-gray-900 dark:text-white">{{ $item->product?->name }}</td>
-                    <td class="px-4 py-2.5 text-gray-500">{{ $item->product?->category?->name ?? '—' }}</td>
-                    <td class="px-4 py-2.5 text-gray-500">{{ $item->product?->unit?->name ?? '—' }}</td>
-                    <td class="px-4 py-2.5 text-right font-medium tabular-nums {{ $item->quantity > 0 ? 'text-gray-900 dark:text-white' : 'text-gray-400' }}">
+                <tr class="border-t border-gray-50 dark:border-gray-700/60 hover:bg-gray-50/70 dark:hover:bg-white/[0.025] transition-colors">
+                    <td class="px-5 py-2.5 font-mono text-xs" style="color:var(--text-muted)">{{ $item->product?->sku ?? '—' }}</td>
+                    <td class="px-5 py-2.5 font-medium text-sm" style="color:var(--text-primary)">{{ $item->product?->name }}</td>
+                    <td class="px-5 py-2.5 text-xs" style="color:var(--text-muted)">{{ $item->product?->category?->name ?? '—' }}</td>
+                    <td class="px-5 py-2.5 text-xs" style="color:var(--text-muted)">{{ $item->product?->unit?->name ?? '—' }}</td>
+                    <td class="px-5 py-2.5 text-right font-medium tabular-nums text-sm" style="{{ $item->quantity > 0 ? 'color:var(--text-primary)' : 'color:var(--text-muted)' }}">
                         {{ number_format($item->quantity, 0, ',', '.') }}
                     </td>
-                    <td class="px-4 py-2.5 text-right text-gray-500 tabular-nums">{{ number_format($item->average_cost, 0, ',', '.') }}đ</td>
-                    <td class="px-4 py-2.5 text-right font-medium text-gray-900 dark:text-white tabular-nums">
+                    <td class="px-5 py-2.5 text-right text-xs tabular-nums" style="color:var(--text-muted)">{{ number_format($item->average_cost, 0, ',', '.') }}đ</td>
+                    <td class="px-5 py-2.5 text-right text-sm font-medium tabular-nums" style="color:var(--text-primary)">
                         {{ number_format($item->quantity * $item->average_cost, 0, ',', '.') }}đ
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="px-4 py-12 text-center text-gray-400">
-                        <i class="ph ph-archive text-4xl block mb-2"></i>
-                        Không có dữ liệu tồn kho tại thời điểm này
+                    <td colspan="7" class="px-5 py-16 text-center">
+                        <i class="ph ph-archive text-3xl block mb-2" style="color:var(--text-muted);opacity:.35"></i>
+                        <p class="text-sm" style="color:var(--text-muted)">Không có dữ liệu tồn kho tại thời điểm này</p>
                     </td>
                 </tr>
                 @endforelse
             </tbody>
             @if($rows->count())
-            <tfoot class="bg-gray-50 dark:bg-gray-700 font-semibold text-gray-700 dark:text-gray-300 text-sm">
-                <tr>
-                    <td colspan="4" class="px-4 py-3">Tổng cộng ({{ number_format($rows->count()) }} sản phẩm)</td>
-                    <td class="px-4 py-3 text-right tabular-nums">{{ number_format($rows->sum('quantity'), 0, ',', '.') }}</td>
+            <tfoot>
+                <tr style="background:var(--surface-bg);border-top:2px solid var(--surface-border)">
+                    <td colspan="4" class="px-5 py-3 text-sm font-semibold" style="color:var(--text-secondary)">
+                        Tổng cộng ({{ number_format($rows->count()) }} sản phẩm)
+                    </td>
+                    <td class="px-5 py-3 text-right text-sm font-bold tabular-nums" style="color:var(--text-primary)">{{ number_format($rows->sum('quantity'), 0, ',', '.') }}</td>
                     <td></td>
-                    <td class="px-4 py-3 text-right text-green-600 dark:text-green-400 tabular-nums">{{ number_format($totalValue, 0, ',', '.') }}đ</td>
+                    <td class="px-5 py-3 text-right text-sm font-bold tabular-nums" style="color:#16a34a">{{ number_format($totalValue, 0, ',', '.') }}đ</td>
                 </tr>
             </tfoot>
             @endif

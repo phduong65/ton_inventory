@@ -1,302 +1,206 @@
 @extends('layouts.admin')
 
-@section('title', 'Kho nhận hàng')
-@section('page-title', 'Kho nhận hàng')
-@section('breadcrumb', 'Danh mục / Kho nhận hàng')
+@section('title', 'Điểm nhận hàng')
+@section('page-title', 'Điểm nhận hàng')
+@section('breadcrumb', 'Danh mục / Điểm nhận')
 
 @section('content')
-<div x-data="{
-    openCreate: false,
-    openEdit: false,
-    openDelete: false,
-    editDest: {},
-    deleteId: null,
-    deleteName: '',
-    openEditModal(dest) {
-        this.editDest = dest;
-        this.openEdit = true;
-    },
-    openDeleteModal(id, name) {
-        this.deleteId = id;
-        this.deleteName = name;
-        this.openDelete = true;
-    }
-}">
+<div x-data="{ openCreate: false, openEdit: false, editDest: null, openDelete: false, deleteDest: null }">
 
-    {{-- Header --}}
-    <div class="flex items-center justify-between mb-4">
-        <form method="GET" class="flex gap-2">
-            <input type="text" name="search" value="{{ request('search') }}"
-                   placeholder="Tìm mã, tên, người quản lý..."
-                   class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-64">
-            <button type="submit"
-                    class="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-gray-700 dark:text-gray-300">
-                <i class="bi bi-search"></i>
-            </button>
-            @if(request('search'))
-            <a href="{{ route('destinations.index') }}"
-               class="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                <i class="bi bi-x-circle"></i>
-            </a>
-            @endif
-        </form>
-        @can('manage-destinations')
+    {{-- ── Page Header ──────────────────────────────────────── --}}
+    <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-2.5">
+            <span class="text-sm font-medium" style="color:var(--text-secondary)">Điểm nhận hàng</span>
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
+                  style="background:rgba(99,102,241,0.10);color:#4f46e5">{{ $destinations->count() }}</span>
+        </div>
+        @can('create-destinations')
         <button @click="openCreate = true"
-                class="inline-flex items-center gap-1.5 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors">
-            <i class="bi bi-plus-lg"></i> Thêm kho
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-xl transition-colors"
+                style="background:#4f46e5"
+                onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">
+            <i class="ph ph-plus text-base"></i> Thêm điểm nhận
         </button>
         @endcan
     </div>
 
-    {{-- Table --}}
-    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    {{-- ── Table ───────────────────────────────────────────── --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden"
+         style="box-shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04)">
         <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left">
-                <thead class="bg-gray-50 dark:bg-gray-700 text-xs text-gray-500 dark:text-gray-400 uppercase">
-                    <tr>
-                        <th class="px-4 py-3">Mã kho</th>
-                        <th class="px-4 py-3">Tên kho</th>
-                        <th class="px-4 py-3">Người quản lý</th>
-                        <th class="px-4 py-3">Điện thoại</th>
-                        <th class="px-4 py-3">Địa chỉ</th>
-                        <th class="px-4 py-3 text-right">Phiếu xuất</th>
-                        <th class="px-4 py-3 w-20"></th>
+            <table class="w-full text-sm">
+                <thead>
+                    <tr style="background:var(--surface-bg);border-bottom:1px solid var(--surface-border)">
+                        <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">Tên</th>
+                        <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">Địa chỉ</th>
+                        <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">Ghi chú</th>
+                        <th class="px-5 py-3"></th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                <tbody>
                     @forelse($destinations as $dest)
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td class="px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400">
-                            {{ $dest->code ?? '—' }}
-                        </td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-2">
-                                <div class="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                                    <i class="bi bi-building text-xs text-blue-600 dark:text-blue-400"></i>
+                    <tr class="border-t border-gray-50 dark:border-gray-700/60 hover:bg-gray-50/70 dark:hover:bg-white/[0.025] transition-colors">
+                        <td class="px-5 py-3.5">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                                     style="background:rgba(59,130,246,0.08)">
+                                    <i class="ph ph-warehouse text-xs" style="color:#3b82f6"></i>
                                 </div>
-                                <div>
-                                    <p class="font-medium text-gray-900 dark:text-white">{{ $dest->name }}</p>
-                                    @if($dest->note)
-                                    <p class="text-xs text-gray-400 truncate max-w-[180px]">{{ $dest->note }}</p>
-                                    @endif
-                                </div>
+                                <span class="font-medium text-sm" style="color:var(--text-primary)">{{ $dest->name }}</span>
                             </div>
                         </td>
-                        <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ $dest->manager ?? '—' }}</td>
-                        <td class="px-4 py-3 text-gray-500">{{ $dest->phone ?? '—' }}</td>
-                        <td class="px-4 py-3 text-gray-500 max-w-[200px] truncate" title="{{ $dest->address }}">
-                            {{ $dest->address ?? '—' }}
-                        </td>
-                        <td class="px-4 py-3 text-right">
-                            @if($dest->transactions_count > 0)
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                                {{ number_format($dest->transactions_count) }}
-                            </span>
-                            @else
-                            <span class="text-gray-400 text-xs">0</span>
-                            @endif
-                        </td>
-                        <td class="px-4 py-3 text-right">
-                            @can('manage-destinations')
+                        <td class="px-5 py-3.5 text-xs" style="color:var(--text-muted)">{{ $dest->address ?? '—' }}</td>
+                        <td class="px-5 py-3.5 text-xs" style="color:var(--text-muted)">{{ $dest->note ?? '—' }}</td>
+                        <td class="px-5 py-3.5">
                             <div class="flex items-center justify-end gap-1">
-                                <button @click="openEditModal({{ $dest->toJson() }})"
-                                        class="p-1.5 text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 rounded transition-colors"
-                                        title="Sửa">
-                                    <i class="bi bi-pencil text-xs"></i>
+                                @can('edit-destinations')
+                                <button @click="editDest = {{ $dest->toJson() }}; openEdit = true"
+                                        class="w-8 h-8 inline-flex items-center justify-center rounded-lg transition-colors" style="color:var(--text-muted)"
+                                        onmouseover="this.style.background='rgba(99,102,241,0.08)';this.style.color='#4f46e5'"
+                                        onmouseout="this.style.background='transparent';this.style.color='var(--text-muted)'">
+                                    <i class="ph ph-pencil-simple text-sm"></i>
                                 </button>
-                                <button @click="openDeleteModal({{ $dest->id }}, '{{ addslashes($dest->name) }}')"
-                                        class="p-1.5 rounded transition-colors {{ $dest->transactions_count > 0 ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-red-600 dark:hover:text-red-400' }}"
-                                        {{ $dest->transactions_count > 0 ? 'disabled title="Kho đã có phiếu xuất, không thể xóa"' : 'title="Xóa"' }}>
-                                    <i class="bi bi-trash text-xs"></i>
+                                @endcan
+                                @can('delete-destinations')
+                                <button @click="deleteDest = {{ $dest->toJson() }}; openDelete = true"
+                                        class="w-8 h-8 inline-flex items-center justify-center rounded-lg transition-colors" style="color:var(--text-muted)"
+                                        onmouseover="this.style.background='rgba(239,68,68,0.08)';this.style.color='#ef4444'"
+                                        onmouseout="this.style.background='transparent';this.style.color='var(--text-muted)'">
+                                    <i class="ph ph-trash text-sm"></i>
                                 </button>
+                                @endcan
                             </div>
-                            @endcan
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-12 text-center text-gray-400">
-                            <i class="ph-warehouse text-4xl block mb-2 opacity-40"></i>
-                            Chưa có kho nhận hàng nào
+                        <td colspan="4" class="px-5 py-16 text-center">
+                            <i class="ph ph-warehouse text-3xl block mb-2" style="color:var(--text-muted);opacity:.35"></i>
+                            <p class="text-sm" style="color:var(--text-muted)">Chưa có điểm nhận hàng</p>
                         </td>
                     </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        @if($destinations->hasPages())
-        <div class="p-4 border-t border-gray-200 dark:border-gray-700">
-            {{ $destinations->links() }}
-        </div>
-        @endif
     </div>
 
-    @can('manage-destinations')
-
-    {{-- Create Modal --}}
-    <div x-show="openCreate" x-transition.opacity
+    {{-- ── Create Modal ─────────────────────────────────────── --}}
+    @can('create-destinations')
+    <div x-show="openCreate"
+         x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
          class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
-        <div class="absolute inset-0 bg-black/50" @click="openCreate = false"></div>
-        <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg p-5">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-semibold text-gray-900 dark:text-white">Thêm kho nhận hàng</h3>
-                <button @click="openCreate = false"
-                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                    <i class="bi bi-x-lg"></i>
+        <div class="absolute inset-0" style="background:rgba(0,0,0,0.45);backdrop-filter:blur(3px)" @click="openCreate = false"></div>
+        <div class="modal-panel relative w-full max-w-md p-6"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95 translate-y-2" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+            <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(59,130,246,0.10)">
+                        <i class="ph ph-warehouse text-sm" style="color:#3b82f6"></i>
+                    </div>
+                    <h3 class="font-semibold text-base" style="color:var(--text-primary)">Thêm điểm nhận</h3>
+                </div>
+                <button @click="openCreate = false" class="w-8 h-8 inline-flex items-center justify-center rounded-lg" style="color:var(--text-muted)" onmouseover="this.style.background='var(--surface-bg)'" onmouseout="this.style.background='transparent'">
+                    <i class="ph ph-x text-base"></i>
                 </button>
             </div>
-            <form action="{{ route('destinations.store') }}" method="POST">
+            <form action="{{ route('destinations.store') }}" method="POST" class="space-y-4">
                 @csrf
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mã kho</label>
-                        <input type="text" name="code" placeholder="KHO43"
-                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 uppercase"
-                               style="text-transform:uppercase"
-                               value="{{ old('code') }}">
-                        @error('code')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Tên kho <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" name="name" required placeholder="Kho 43"
-                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                               value="{{ old('name') }}">
-                        @error('name')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Người quản lý</label>
-                        <input type="text" name="manager" placeholder="Nguyễn Văn A"
-                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                               value="{{ old('manager') }}">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Điện thoại</label>
-                        <input type="text" name="phone" placeholder="0901 234 567"
-                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                               value="{{ old('phone') }}">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Địa chỉ</label>
-                        <input type="text" name="address" placeholder="Tầng 1, Khu A..."
-                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                               value="{{ old('address') }}">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ghi chú</label>
-                        <textarea name="note" rows="2" placeholder="Thông tin bổ sung..."
-                                  class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none">{{ old('note') }}</textarea>
-                    </div>
-                </div>
-                <div class="flex justify-end gap-2 pt-4">
-                    <button type="button" @click="openCreate = false"
-                            class="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
-                        Hủy
-                    </button>
-                    <button type="submit"
-                            class="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
-                        Lưu
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    {{-- Edit Modal --}}
-    <div x-show="openEdit" x-transition.opacity
-         class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
-        <div class="absolute inset-0 bg-black/50" @click="openEdit = false"></div>
-        <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg p-5">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-semibold text-gray-900 dark:text-white">Sửa kho nhận hàng</h3>
-                <button @click="openEdit = false"
-                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-            <form :action="`/destinations/${editDest.id}`" method="POST">
-                @csrf @method('PUT')
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mã kho</label>
-                        <input type="text" name="code" :value="editDest.code"
-                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 uppercase"
-                               style="text-transform:uppercase">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Tên kho <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" name="name" :value="editDest.name" required
-                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Người quản lý</label>
-                        <input type="text" name="manager" :value="editDest.manager"
-                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Điện thoại</label>
-                        <input type="text" name="phone" :value="editDest.phone"
-                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Địa chỉ</label>
-                        <input type="text" name="address" :value="editDest.address"
-                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ghi chú</label>
-                        <textarea name="note" rows="2" x-text="editDest.note"
-                                  class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"></textarea>
-                    </div>
-                </div>
-                <div class="flex justify-end gap-2 pt-4">
-                    <button type="button" @click="openEdit = false"
-                            class="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
-                        Hủy
-                    </button>
-                    <button type="submit"
-                            class="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
-                        Cập nhật
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    {{-- Delete Confirm Modal --}}
-    <div x-show="openDelete" x-transition.opacity
-         class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
-        <div class="absolute inset-0 bg-black/50" @click="openDelete = false"></div>
-        <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-sm p-5">
-            <div class="flex items-start gap-3 mb-4">
-                <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
-                    <i class="bi bi-exclamation-triangle text-red-600 dark:text-red-400"></i>
+                <div>
+                    <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color:var(--text-muted)">Tên <span class="text-red-500 normal-case">*</span></label>
+                    <input type="text" name="name" required class="form-input">
                 </div>
                 <div>
-                    <h3 class="font-semibold text-gray-900 dark:text-white">Xóa kho nhận hàng</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        Bạn có chắc muốn xóa <strong x-text="deleteName" class="text-gray-700 dark:text-gray-300"></strong>?
-                        Hành động này không thể hoàn tác.
-                    </p>
+                    <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color:var(--text-muted)">Địa chỉ</label>
+                    <input type="text" name="address" class="form-input">
                 </div>
-            </div>
-            <form :action="`/destinations/${deleteId}`" method="POST" class="flex justify-end gap-2">
-                @csrf @method('DELETE')
-                <button type="button" @click="openDelete = false"
-                        class="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
-                    Hủy
-                </button>
-                <button type="submit"
-                        class="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                    Xóa
-                </button>
+                <div>
+                    <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color:var(--text-muted)">Ghi chú</label>
+                    <textarea name="note" rows="2" class="form-input resize-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-1">
+                    <button type="button" @click="openCreate = false" class="px-4 py-2 text-sm font-medium rounded-xl border transition-colors" style="border-color:var(--surface-border);color:var(--text-secondary)" onmouseover="this.style.background='var(--surface-bg)'" onmouseout="this.style.background='transparent'">Hủy</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white rounded-xl" style="background:#4f46e5" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">Lưu</button>
+                </div>
             </form>
         </div>
     </div>
+    @endcan
 
+    {{-- ── Edit Modal ───────────────────────────────────────── --}}
+    @can('edit-destinations')
+    <div x-show="openEdit"
+         x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
+        <div class="absolute inset-0" style="background:rgba(0,0,0,0.45);backdrop-filter:blur(3px)" @click="openEdit = false"></div>
+        <div class="modal-panel relative w-full max-w-md p-6"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95 translate-y-2" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+            <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(99,102,241,0.10)">
+                        <i class="ph ph-pencil-simple text-sm" style="color:#4f46e5"></i>
+                    </div>
+                    <h3 class="font-semibold text-base" style="color:var(--text-primary)">Sửa điểm nhận</h3>
+                </div>
+                <button @click="openEdit = false" class="w-8 h-8 inline-flex items-center justify-center rounded-lg" style="color:var(--text-muted)" onmouseover="this.style.background='var(--surface-bg)'" onmouseout="this.style.background='transparent'">
+                    <i class="ph ph-x text-base"></i>
+                </button>
+            </div>
+            <template x-if="editDest">
+                <form :action="`/destinations/${editDest.id}`" method="POST" class="space-y-4">
+                    @csrf @method('PUT')
+                    <div>
+                        <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color:var(--text-muted)">Tên <span class="text-red-500 normal-case">*</span></label>
+                        <input type="text" name="name" :value="editDest.name" required class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color:var(--text-muted)">Địa chỉ</label>
+                        <input type="text" name="address" :value="editDest.address" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color:var(--text-muted)">Ghi chú</label>
+                        <textarea name="note" rows="2" class="form-input resize-none" x-text="editDest.note"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-1">
+                        <button type="button" @click="openEdit = false" class="px-4 py-2 text-sm font-medium rounded-xl border transition-colors" style="border-color:var(--surface-border);color:var(--text-secondary)" onmouseover="this.style.background='var(--surface-bg)'" onmouseout="this.style.background='transparent'">Hủy</button>
+                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white rounded-xl" style="background:#4f46e5" onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">Cập nhật</button>
+                    </div>
+                </form>
+            </template>
+        </div>
+    </div>
+    @endcan
+
+    {{-- ── Delete Modal ─────────────────────────────────────── --}}
+    @can('delete-destinations')
+    <div x-show="openDelete"
+         x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
+        <div class="absolute inset-0" style="background:rgba(0,0,0,0.45);backdrop-filter:blur(3px)" @click="openDelete = false"></div>
+        <div class="modal-panel relative w-full max-w-sm p-6"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95 translate-y-2" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+            <div class="flex flex-col items-center text-center gap-3 mb-5">
+                <div class="w-10 h-10 rounded-2xl flex items-center justify-center" style="background:rgba(239,68,68,0.10)">
+                    <i class="ph ph-trash text-lg" style="color:#ef4444"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-base mb-1" style="color:var(--text-primary)">Xóa điểm nhận?</h3>
+                    <p class="text-sm" style="color:var(--text-muted)">Hành động này không thể hoàn tác.</p>
+                    <p class="text-sm font-medium mt-1" style="color:var(--text-primary)" x-text="deleteDest?.name"></p>
+                </div>
+            </div>
+            <template x-if="deleteDest">
+                <form :action="`/destinations/${deleteDest.id}`" method="POST" class="flex gap-2">
+                    @csrf @method('DELETE')
+                    <button type="button" @click="openDelete = false" class="flex-1 py-2 text-sm font-medium rounded-xl border transition-colors" style="border-color:var(--surface-border);color:var(--text-secondary)" onmouseover="this.style.background='var(--surface-bg)'" onmouseout="this.style.background='transparent'">Hủy</button>
+                    <button type="submit" class="flex-1 py-2 text-sm font-medium text-white rounded-xl" style="background:#ef4444" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">Xóa</button>
+                </form>
+            </template>
+        </div>
+    </div>
     @endcan
 </div>
 @endsection

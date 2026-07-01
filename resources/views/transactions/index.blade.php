@@ -5,108 +5,143 @@
 @section('breadcrumb', 'Phiếu NK/XK')
 
 @section('content')
-<div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-    <p class="text-sm text-gray-500">{{ $transactions->total() }} phiếu</p>
-    <div class="flex flex-wrap gap-2">
-        @can('create-transactions')
+
+{{-- ── Page Header ──────────────────────────────────────── --}}
+<div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <div class="flex items-center gap-2.5">
+        <span class="text-sm font-medium" style="color:var(--text-secondary)">Phiếu giao dịch</span>
+        <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
+              style="background:rgba(99,102,241,0.10);color:#4f46e5">
+            {{ $transactions->total() }}
+        </span>
+    </div>
+    @can('create-transactions')
+    <div class="flex gap-2">
         <a href="{{ route('transactions.create', ['type' => 'IN']) }}"
-           class="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">
-            <i class="bi bi-download"></i> <span class="hidden sm:inline">Tạo </span>Phiếu nhập
+           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-xl transition-colors"
+           style="background:#3b82f6"
+           onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
+            <i class="ph ph-arrow-fat-line-down text-base"></i>
+            <span class="hidden sm:inline">Tạo</span> Phiếu nhập
         </a>
         <a href="{{ route('transactions.create', ['type' => 'OUT']) }}"
-           class="inline-flex items-center gap-1.5 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg">
-            <i class="bi bi-upload"></i> <span class="hidden sm:inline">Tạo </span>Phiếu xuất
+           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-xl transition-colors"
+           style="background:#f97316"
+           onmouseover="this.style.background='#ea580c'" onmouseout="this.style.background='#f97316'">
+            <i class="ph ph-arrow-fat-line-up text-base"></i>
+            <span class="hidden sm:inline">Tạo</span> Phiếu xuất
         </a>
-        @endcan
     </div>
+    @endcan
 </div>
 
-<div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-    <form method="GET" class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-3">
-        <select name="type" class="flex-1 min-w-[120px] px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+{{-- ── Table Card ───────────────────────────────────────── --}}
+<div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden"
+     style="box-shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04)">
+
+    {{-- Filter --}}
+    <form method="GET" class="p-4 flex flex-wrap gap-3" style="border-bottom:1px solid var(--surface-border)">
+        <select name="type" class="form-input flex-1 min-w-[120px] h-9 text-sm">
             <option value="">Tất cả loại</option>
-            <option value="IN" {{ request('type') === 'IN' ? 'selected' : '' }}>Nhập kho</option>
+            <option value="IN"  {{ request('type') === 'IN'  ? 'selected' : '' }}>Nhập kho</option>
             <option value="OUT" {{ request('type') === 'OUT' ? 'selected' : '' }}>Xuất kho</option>
         </select>
-        <select name="status" class="flex-1 min-w-[130px] px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+        <select name="status" class="form-input flex-1 min-w-[130px] h-9 text-sm">
             <option value="">Tất cả trạng thái</option>
-            <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Nháp</option>
-            <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Chờ duyệt</option>
+            <option value="draft"    {{ request('status') === 'draft'    ? 'selected' : '' }}>Nháp</option>
+            <option value="pending"  {{ request('status') === 'pending'  ? 'selected' : '' }}>Chờ duyệt</option>
             <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Đã duyệt</option>
             <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Từ chối</option>
         </select>
         <input type="date" name="date_from" value="{{ request('date_from') }}"
-               class="flex-1 min-w-[130px] px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-        <input type="date" name="date_to" value="{{ request('date_to') }}"
-               class="flex-1 min-w-[130px] px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-        <button type="submit" class="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium">
-            <i class="bi bi-search mr-1"></i> Lọc
+               class="form-input flex-1 min-w-[130px] h-9 text-sm">
+        <input type="date" name="date_to"   value="{{ request('date_to') }}"
+               class="form-input flex-1 min-w-[130px] h-9 text-sm">
+        <button type="submit"
+                class="h-9 px-4 text-sm font-medium rounded-xl transition-colors"
+                style="background:var(--surface-bg);border:1px solid var(--surface-border);color:var(--text-secondary)"
+                onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-secondary)'">
+            <i class="ph ph-magnifying-glass mr-1"></i> Lọc
         </button>
+        @if(request()->hasAny(['type','status','date_from','date_to']))
+        <a href="{{ route('transactions.index') }}"
+           class="h-9 px-3 inline-flex items-center text-sm rounded-xl border transition-colors"
+           style="border-color:var(--surface-border);color:var(--text-muted)">
+            <i class="ph ph-x text-sm"></i>
+        </a>
+        @endif
     </form>
 
     <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left whitespace-nowrap">
-            <thead class="bg-gray-50 dark:bg-gray-700 text-xs text-gray-500 dark:text-gray-400 uppercase">
-                <tr>
-                    <th class="px-4 py-3">Số phiếu</th>
-                    <th class="px-4 py-3">Loại</th>
-                    <th class="px-4 py-3">Ngày</th>
-                    <th class="px-4 py-3">Đối tác</th>
-                    <th class="px-4 py-3">Người tạo</th>
-                    <th class="px-4 py-3 text-center">Trạng thái</th>
-                    <th class="px-4 py-3"></th>
+        <table class="w-full text-sm whitespace-nowrap">
+            <thead>
+                <tr style="background:var(--surface-bg);border-bottom:1px solid var(--surface-border)">
+                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">Số phiếu</th>
+                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">Loại</th>
+                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">Ngày</th>
+                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">Đối tác</th>
+                    <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">Người tạo</th>
+                    <th class="px-5 py-3 text-center text-[11px] font-semibold uppercase tracking-wide" style="color:var(--text-muted)">Trạng thái</th>
+                    <th class="px-5 py-3"></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+            <tbody>
                 @forelse($transactions as $tx)
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td class="px-4 py-3">
-                        <a href="{{ route('transactions.show', $tx) }}" class="font-mono text-xs text-primary-600 hover:underline font-medium">
+                <tr class="border-t border-gray-50 dark:border-gray-700/60 hover:bg-gray-50/70 dark:hover:bg-white/[0.025] transition-colors">
+                    <td class="px-5 py-3.5">
+                        <a href="{{ route('transactions.show', $tx) }}"
+                           class="font-mono text-xs font-semibold hover:underline"
+                           style="color:var(--sidebar-accent)">
                             {{ $tx->code }}
                         </a>
                     </td>
-                    <td class="px-4 py-3">
+                    <td class="px-5 py-3.5">
                         @if($tx->type === 'IN')
-                            <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                                <i class="bi bi-download mr-1"></i> Nhập
-                            </span>
+                        <span class="badge-blue inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full">
+                            <i class="bi bi-download text-[10px]"></i> Nhập
+                        </span>
                         @else
-                            <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-                                <i class="bi bi-upload mr-1"></i> Xuất
-                            </span>
+                        <span class="badge-orange inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full">
+                            <i class="bi bi-upload text-[10px]"></i> Xuất
+                        </span>
                         @endif
                     </td>
-                    <td class="px-4 py-3 text-gray-500">{{ $tx->date?->format('d/m/Y') }}</td>
-                    <td class="px-4 py-3 text-gray-700 dark:text-gray-300">
+                    <td class="px-5 py-3.5" style="color:var(--text-secondary)">
+                        <span class="block text-xs">{{ $tx->date?->format('d/m/Y') }}</span>
+                        <span class="block text-[11px] tabular-nums" style="color:var(--text-muted)">{{ $tx->created_at?->format('H:i') }}</span>
+                    </td>
+                    <td class="px-5 py-3.5 text-xs" style="color:var(--text-primary)">
                         {{ $tx->supplier?->name ?? $tx->destination?->name ?? '—' }}
                     </td>
-                    <td class="px-4 py-3 text-gray-500">{{ $tx->createdBy?->name ?? '—' }}</td>
-                    <td class="px-4 py-3 text-center">
+                    <td class="px-5 py-3.5 text-xs" style="color:var(--text-muted)">{{ $tx->createdBy?->name ?? '—' }}</td>
+                    <td class="px-5 py-3.5 text-center">
                         @php
-                        $badge = match($tx->status) {
-                            'draft'    => 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
-                            'pending'  => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-                            'approved' => 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-                            'rejected' => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                        $badgeClass = match($tx->status) {
+                            'draft'    => 'badge-gray',
+                            'pending'  => 'badge-yellow',
+                            'approved' => 'badge-green',
+                            'rejected' => 'badge-red',
+                            default    => 'badge-gray',
                         };
                         $label = match($tx->status) {
-                            'draft'    => 'Nháp',
-                            'pending'  => 'Chờ duyệt',
-                            'approved' => 'Đã duyệt',
-                            'rejected' => 'Từ chối',
+                            'draft' => 'Nháp', 'pending' => 'Chờ duyệt',
+                            'approved' => 'Đã duyệt', 'rejected' => 'Từ chối', default => $tx->status,
                         };
                         @endphp
-                        <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium {{ $badge }}">{{ $label }}</span>
+                        <span class="{{ $badgeClass }} inline-flex text-xs font-medium px-2 py-0.5 rounded-full">{{ $label }}</span>
                     </td>
-                    <td class="px-4 py-3 text-right">
-                        <a href="{{ route('transactions.show', $tx) }}" class="text-xs text-primary-600 hover:underline">Xem</a>
+                    <td class="px-5 py-3.5 text-right">
+                        <a href="{{ route('transactions.show', $tx) }}"
+                           class="text-xs font-medium hover:underline" style="color:var(--sidebar-accent)">
+                            Xem →
+                        </a>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="px-4 py-12 text-center text-gray-400">
-                        <i class="ph-clipboard-text text-4xl block mb-2"></i>
-                        Chưa có phiếu nào
+                    <td colspan="7" class="px-5 py-16 text-center">
+                        <i class="ph ph-receipt text-3xl block mb-2" style="color:var(--text-muted);opacity:.35"></i>
+                        <p class="text-sm" style="color:var(--text-muted)">Chưa có phiếu nào</p>
                     </td>
                 </tr>
                 @endforelse
@@ -115,9 +150,10 @@
     </div>
 
     @if($transactions->hasPages())
-    <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+    <div class="px-5 py-3" style="border-top:1px solid var(--surface-border)">
         {{ $transactions->links() }}
     </div>
     @endif
 </div>
+
 @endsection
