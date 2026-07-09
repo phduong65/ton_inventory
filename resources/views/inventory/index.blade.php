@@ -112,17 +112,17 @@
                 @php $belowMin = $item->product?->isBelowMinStock(); @endphp
                 <tr class="border-t transition-colors {{ $belowMin ? 'border-red-100 dark:border-red-900/30 bg-red-50/40 dark:bg-red-900/5 hover:bg-red-50 dark:hover:bg-red-900/10' : 'border-gray-50 dark:border-gray-700/60 hover:bg-gray-50/70 dark:hover:bg-white/[0.025]' }}">
                     <td class="px-5 py-3.5 font-mono text-xs" style="color:var(--text-muted)">{{ $item->product?->sku }}</td>
-                    <td class="px-5 py-3.5 font-medium text-sm {{ $belowMin ? 'text-red-700 dark:text-red-400' : '' }}" style="{{ $belowMin ? '' : 'color:var(--text-primary)' }}">
+                    <td class="px-5 py-3.5 font-medium text-xs whitespace-normal break-words max-w-[220px] {{ $belowMin ? 'text-red-700 dark:text-red-400' : '' }}" style="{{ $belowMin ? '' : 'color:var(--text-primary)' }}">
                         <div class="flex items-center gap-1.5">
                             {{ $item->product?->name }}
                             @if($belowMin)
-                            <i class="ph ph-warning-circle text-sm text-red-500"></i>
+                            <i class="ph ph-warning-circle text-xs text-red-500"></i>
                             @endif
                         </div>
                     </td>
                     <td class="px-5 py-3.5 text-xs" style="color:var(--text-muted)">{{ $item->product?->category?->name ?? '—' }}</td>
                     <td class="px-5 py-3.5 text-xs" style="color:var(--text-muted)">{{ $item->product?->unit?->name }}</td>
-                    <td class="px-5 py-3.5 text-right font-semibold tabular-nums text-sm
+                    <td class="px-5 py-3.5 text-right font-semibold tabular-nums text-xs
                         {{ $belowMin ? 'text-red-600 dark:text-red-400' : ($item->quantity > 0 ? 'text-emerald-600 dark:text-emerald-400' : '') }}"
                         style="{{ !$belowMin && $item->quantity <= 0 ? 'color:var(--text-muted)' : '' }}">
                         {{ number_format($item->quantity, 0, ',', '.') }}
@@ -137,7 +137,7 @@
                     <td class="px-5 py-3.5 text-right text-xs tabular-nums" style="color:var(--text-muted)">
                         {{ number_format($item->average_cost, 0, ',', '.') }}đ
                     </td>
-                    <td class="px-5 py-3.5 text-right text-sm font-medium tabular-nums" style="color:var(--text-primary)">
+                    <td class="px-5 py-3.5 text-right text-xs font-medium tabular-nums" style="color:var(--text-primary)">
                         {{ number_format($item->quantity * $item->average_cost, 0, ',', '.') }}đ
                     </td>
                     <td class="px-5 py-3.5 text-right">
@@ -151,7 +151,7 @@
                 <tr>
                     <td colspan="9" class="px-5 py-16 text-center">
                         <i class="ph ph-archive text-3xl block mb-2" style="color:var(--text-muted);opacity:.35"></i>
-                        <p class="text-sm" style="color:var(--text-muted)">Không có dữ liệu tồn kho</p>
+                        <p class="text-xs" style="color:var(--text-muted)">Không có dữ liệu tồn kho</p>
                     </td>
                 </tr>
                 @endforelse
@@ -269,16 +269,16 @@
                 @foreach($destRows as $row)
                 <tr class="border-t border-gray-50 dark:border-gray-700/60 hover:bg-gray-50/70 dark:hover:bg-white/[0.025] transition-colors">
                     <td class="px-5 py-3.5 font-mono text-xs" style="color:var(--text-muted)">{{ $row->product?->sku ?? '—' }}</td>
-                    <td class="px-5 py-3.5 font-medium text-sm" style="color:var(--text-primary)">{{ $row->product?->name }}</td>
+                    <td class="px-5 py-3.5 font-medium text-xs whitespace-normal break-words max-w-[220px]" style="color:var(--text-primary)">{{ $row->product?->name }}</td>
                     <td class="px-5 py-3.5 text-xs" style="color:var(--text-muted)">{{ $row->product?->category?->name ?? '—' }}</td>
                     <td class="px-5 py-3.5 text-xs" style="color:var(--text-muted)">{{ $row->product?->unit?->name ?? '—' }}</td>
-                    <td class="px-5 py-3.5 text-right font-semibold tabular-nums text-sm" style="color:var(--text-primary)">
+                    <td class="px-5 py-3.5 text-right font-semibold tabular-nums text-xs" style="color:var(--text-primary)">
                         {{ number_format($row->qty, 0, ',', '.') }}
                     </td>
                     <td class="px-5 py-3.5 text-right text-xs tabular-nums" style="color:var(--text-muted)">
                         {{ number_format($row->avg_cost, 0, ',', '.') }}đ
                     </td>
-                    <td class="px-5 py-3.5 text-right text-sm font-medium tabular-nums" style="color:var(--text-primary)">
+                    <td class="px-5 py-3.5 text-right text-xs font-medium tabular-nums" style="color:var(--text-primary)">
                         {{ number_format($row->value, 0, ',', '.') }}đ
                     </td>
                 </tr>
@@ -286,14 +286,14 @@
             </tbody>
             <tfoot>
                 <tr style="background:var(--surface-bg);border-top:2px solid var(--surface-border)">
-                    <td colspan="4" class="px-5 py-3 text-sm font-semibold" style="color:var(--text-secondary)">
+                    <td colspan="4" class="px-5 py-3 text-xs font-semibold" style="color:var(--text-secondary)">
                         Tổng — {{ ($destRows ?? collect())->count() }} mặt hàng
                     </td>
-                    <td class="px-5 py-3 text-right text-sm font-bold tabular-nums" style="color:var(--text-primary)">
+                    <td class="px-5 py-3 text-right text-xs font-bold tabular-nums" style="color:var(--text-primary)">
                         {{ number_format(($destRows ?? collect())->sum('qty'), 0, ',', '.') }}
                     </td>
                     <td></td>
-                    <td class="px-5 py-3 text-right text-sm font-bold tabular-nums" style="color:#2563eb">
+                    <td class="px-5 py-3 text-right text-xs font-bold tabular-nums" style="color:#2563eb">
                         {{ number_format(($destRows ?? collect())->sum('value'), 0, ',', '.') }}đ
                     </td>
                 </tr>

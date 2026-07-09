@@ -930,7 +930,7 @@
              class="fixed inset-0 z-50 flex items-center justify-center p-4"
              style="display:none">
             <div class="absolute inset-0 bg-black/40" @click="showStockDialog = false"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-sm p-5">
+            <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-[min(24rem,98vw)] max-h-[92vh] overflow-y-auto p-5">
                 <div class="flex items-start gap-3 mb-4">
                     <div class="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center"
                          style="background:rgba(239,68,68,.12)">

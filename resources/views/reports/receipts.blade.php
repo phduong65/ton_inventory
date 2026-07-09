@@ -110,7 +110,7 @@
                         </a>
                     </td>
                     <td class="px-5 py-2.5 text-xs" style="color:var(--text-secondary)">{{ $row->transaction?->supplier?->name ?? '—' }}</td>
-                    <td class="px-5 py-2.5">
+                    <td class="px-5 py-2.5 whitespace-normal break-words max-w-[220px]">
                         <div class="text-sm font-medium" style="color:var(--text-primary)">{{ $row->product?->name }}</div>
                         <div class="text-[10px] font-mono" style="color:var(--text-muted)">{{ $row->product?->sku }}</div>
                     </td>

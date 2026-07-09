@@ -84,7 +84,7 @@
                 @forelse($rows as $row)
                 <tr class="border-t border-gray-50 dark:border-gray-700/60 hover:bg-gray-50/70 dark:hover:bg-white/[0.025] transition-colors">
                     <td class="px-5 py-2.5 font-mono text-xs" style="color:var(--text-muted)">{{ $row['product']?->sku }}</td>
-                    <td class="px-5 py-2.5">
+                    <td class="px-5 py-2.5 whitespace-normal break-words max-w-[220px]">
                         <span class="font-medium text-sm" style="color:var(--text-primary)">{{ $row['product']?->name }}</span>
                         <span class="text-xs ml-1" style="color:var(--text-muted)">{{ $row['product']?->category?->name }}</span>
                     </td>

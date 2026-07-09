@@ -22,8 +22,108 @@
 </div>
 @endif
 
-<div x-data="stocktakeForm()">
-<form action="{{ route('stocktakes.store') }}" method="POST">
+<script>
+    window.__stocktakeProductsData = @json($productsData);
+    window.stocktakeForm = function(productsData) {
+        return {
+            productsData,
+            rows: [{ id: 1, product_id: '', actual_qty: '' }],
+            nextId: 2,
+            selectedCategoryId: '{{ old('category_id', '') }}',
+            submittingButton: null,
+            submitting: false,
+            palette: { open: false, search: '', results: [], targetRowId: null, focusIdx: -1 },
+
+            addRow() {
+                this.rows.push({ id: this.nextId++, product_id: '', actual_qty: '' });
+            },
+            removeRow(i) { if (this.rows.length > 1) this.rows.splice(i, 1); },
+            productOf(row) { return this.productsData[row.product_id]; },
+
+            // ── Command Palette ───────────────────────────────────────────────
+            _selectedIds(excludeRowId) {
+                return new Set(this.rows.filter(r => r.id !== excludeRowId && r.product_id).map(r => parseInt(r.product_id)));
+            },
+            _allProducts() {
+                return Object.entries(this.productsData).map(([id, p]) => ({ id: parseInt(id), ...p }));
+            },
+            _filteredProducts(row) {
+                const q = this.palette.search.toLowerCase().trim();
+                const taken = this._selectedIds(row ? row.id : null);
+                return this._allProducts().filter(p => {
+                    if (taken.has(p.id)) return false;
+                    if (this.selectedCategoryId !== '' && p.rootId != this.selectedCategoryId) return false;
+                    if (!q) return true;
+                    return p.name.toLowerCase().includes(q) ||
+                        (p.sku || '').toLowerCase().includes(q) ||
+                        (p.category || '').toLowerCase().includes(q);
+                });
+            },
+            openPalette(row) {
+                this.palette.targetRowId = row.id;
+                this.palette.search = '';
+                this.palette.focusIdx = -1;
+                this.palette.results = this._filteredProducts(row);
+                this.palette.open = true;
+                this.$nextTick(() => {
+                    document.getElementById('cp-search')?.focus();
+                    document.getElementById('cp-list')?.scrollTo(0, 0);
+                });
+            },
+            closePalette() {
+                this.palette.open = false;
+                this.palette.targetRowId = null;
+            },
+            filterPalette() {
+                const row = this.rows.find(r => r.id === this.palette.targetRowId);
+                this.palette.results = this._filteredProducts(row);
+                this.palette.focusIdx = this.palette.results.length ? 0 : -1;
+            },
+            selectFromPalette(product) {
+                const row = this.rows.find(r => r.id === this.palette.targetRowId);
+                if (row) { row.product_id = product.id; }
+                this.closePalette();
+            },
+            paletteMoveDown() {
+                if (this.palette.focusIdx < this.palette.results.length - 1) {
+                    this.palette.focusIdx++;
+                    this.$nextTick(() => document.querySelector('.cp-focused')?.scrollIntoView({ block: 'nearest' }));
+                }
+            },
+            paletteMoveUp() {
+                if (this.palette.focusIdx > 0) {
+                    this.palette.focusIdx--;
+                    this.$nextTick(() => document.querySelector('.cp-focused')?.scrollIntoView({ block: 'nearest' }));
+                }
+            },
+            paletteConfirm() {
+                const item = this.palette.results[this.palette.focusIdx] ?? (this.palette.results.length === 1 ? this.palette.results[0] : null);
+                if (item) this.selectFromPalette(item);
+            },
+
+            formatQty(n) { return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 3 }).format(n || 0); },
+
+            // ── Submit ────────────────────────────────────────────────────────
+            handleSubmit() {
+                if (this.submitting) return;
+                this.submitting = true;
+                // Bỏ các dòng chưa chọn sản phẩm trước khi gửi
+                this.rows = this.rows.filter(r => r.product_id);
+                this.$nextTick(() => {
+                    const form = this.$refs.form;
+                    const fd = new FormData(form);
+                    if (this.submittingButton) fd.append(this.submittingButton, '1');
+                    fetch(form.action, { method: 'POST', body: fd })
+                        .then(resp => { window.location.href = resp.url; })
+                        .catch(() => { this.submitting = false; });
+                });
+            },
+        };
+    };
+</script>
+
+<div x-data="stocktakeForm(window.__stocktakeProductsData)">
+<form x-ref="form" action="{{ route('stocktakes.store') }}" method="POST" @submit.prevent="handleSubmit()">
     @csrf
 
     @if($destination)
@@ -57,11 +157,17 @@
             {{-- Right: action buttons --}}
             <div class="flex items-center gap-2 flex-shrink-0">
                 <a href="{{ route('stocktakes.index') }}" class="btn-ghost">Hủy</a>
-                <button type="submit" name="save" value="1" class="btn-outline">
+                <button type="submit" @click="submittingButton = 'save'" :disabled="submitting" class="btn-outline">
                     <i class="bi bi-floppy" style="font-size:12px"></i> Lưu nháp
                 </button>
-                <button type="submit" name="submit" value="1" class="{{ $destination ? 'btn-primary-blue' : 'btn-primary' }}">
-                    <i class="bi bi-send" style="font-size:11px"></i> Gửi chờ duyệt
+                <button type="submit" @click="submittingButton = 'submit'" :disabled="submitting" class="{{ $destination ? 'btn-primary-blue' : 'btn-primary' }}">
+                    <template x-if="submitting">
+                        <i class="bi bi-hourglass-split" style="font-size:11px"></i>
+                    </template>
+                    <template x-if="!submitting">
+                        <i class="bi bi-send" style="font-size:11px"></i>
+                    </template>
+                    Gửi chờ duyệt
                 </button>
             </div>
         </div>
@@ -84,6 +190,7 @@
                 </span>
             </label>
             @endforeach
+            <span class="text-xs" style="color:var(--text-muted); margin-left:4px">— giới hạn danh sách chọn sản phẩm bên dưới</span>
         </div>
         @endif
     </div>
@@ -91,28 +198,25 @@
     {{-- ── Product table ────────────────────────────────────────────── --}}
     <div class="create-card">
 
-        {{-- Toolbar: search full-width --}}
+        {{-- Toolbar --}}
         <div class="create-card-header" style="gap:10px; padding:10px 16px">
             <div class="create-accent-bar" style="background:{{ $destination ? '#2563eb' : '#7c3aed' }}; flex-shrink:0"></div>
-            {{-- Search chiếm toàn bộ chiều rộng còn lại --}}
-            <div style="flex:1; position:relative">
-                <i class="bi bi-search" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:12px; color:var(--text-muted); pointer-events:none"></i>
-                <input type="text" x-model="search" placeholder="Tìm sản phẩm, SKU..."
-                       style="width:100%; font-size:13px; padding:6px 10px 6px 30px; border-radius:8px;
-                              border:1px solid var(--surface-border); background:var(--surface-bg);
-                              color:var(--text-primary); outline:none; box-sizing:border-box"
-                       onfocus="this.style.borderColor='{{ $destination ? '#2563eb' : '#7c3aed' }}'"
-                       onblur="this.style.borderColor='var(--surface-border)'">
-            </div>
+            <span style="font-size:13.5px; font-weight:600; color:var(--text-primary)">Sản phẩm kiểm kê</span>
+            <span style="font-size:11px; padding:2px 8px; border-radius:99px; background:var(--surface-bg); color:var(--text-muted)">
+                <span x-text="rows.length"></span> dòng
+            </span>
+            <button type="button" @click="addRow()" class="btn-add-row" style="margin-left:auto">
+                <i class="bi bi-plus-lg" style="font-size:10px"></i> Thêm dòng
+            </button>
         </div>
 
         {{-- Hint row --}}
         <p style="padding:7px 16px; font-size:12px; color:var(--text-muted); border-bottom:1px solid var(--surface-border)">
             @if($destination)
-                Nhập SL thực tế tại <strong>{{ $destination->name }}</strong>. Để trống = bỏ qua.
+                Chọn sản phẩm cần kiểm kê tại <strong>{{ $destination->name }}</strong> rồi nhập SL thực tế.
                 <span style="color:#2563eb">Tồn HT = tổng đã xuất đến kho này.</span>
             @else
-                Nhập số lượng thực tế đếm được. Để trống = bỏ qua sản phẩm đó.
+                Chọn sản phẩm cần kiểm kê rồi nhập số lượng thực tế đếm được. Dòng chưa chọn sản phẩm sẽ tự bỏ qua.
             @endif
         </p>
 
@@ -123,60 +227,129 @@
                         <th style="padding:10px 16px; text-align:left; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; width:44px">#</th>
                         <th style="padding:10px 12px; text-align:left; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em">Sản phẩm</th>
                         <th style="padding:10px 12px; text-align:left; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; width:80px">ĐVT</th>
-                        <th style="padding:10px 12px; text-align:left; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; width:120px">Danh mục</th>
                         <th style="padding:10px 12px; text-align:right; font-size:11px; font-weight:600; color:{{ $destination ? '#2563eb' : 'var(--text-muted)' }}; text-transform:uppercase; letter-spacing:.05em; width:140px">
                             {{ $destination ? 'Đã nhận (HT)' : 'Tồn hệ thống' }}
                         </th>
                         <th style="padding:10px 12px; text-align:right; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; width:160px">SL thực tế</th>
+                        <th style="padding:10px 12px; width:40px"></th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($products as $i => $product)
-                    @php
-                        $sysQty = $destination
-                            ? ($product->destination_qty ?? 0)
-                            : ($product->inventory?->quantity ?? 0);
-                    @endphp
-                    <tr class="kk-row"
-                        x-show="isVisible({{ $product->id }}, {{ Js::from($product->name) }})"
-                        style="border-top:1px solid var(--surface-border)">
-                        <td style="padding:10px 16px">
-                            <span class="kk-row-num">{{ $i + 1 }}</span>
-                        </td>
-                        <td style="padding:10px 12px; font-weight:500; color:var(--text-primary)">
-                            {{ $product->name }}
-                            @if($product->sku)
-                            <span style="font-size:11px; color:var(--text-muted); font-weight:400; margin-left:4px">{{ $product->sku }}</span>
-                            @endif
-                            <input type="hidden" name="details[{{ $i }}][product_id]" value="{{ $product->id }}"
-                                   :disabled="!isVisible({{ $product->id }}, {{ Js::from($product->name) }})">
-                            <input type="hidden" name="details[{{ $i }}][system_qty]" value="{{ $sysQty }}"
-                                   :disabled="!isVisible({{ $product->id }}, {{ Js::from($product->name) }})">
-                        </td>
-                        <td style="padding:10px 12px; color:var(--text-secondary); font-size:13px">{{ $product->unit?->name ?? '—' }}</td>
-                        <td style="padding:10px 12px; font-size:12px; color:var(--text-muted)">{{ $product->category?->name ?? '—' }}</td>
-                        <td style="padding:10px 12px; text-align:right; color:{{ $destination ? '#2563eb' : 'var(--text-secondary)' }}; font-size:13.5px; font-variant-numeric:tabular-nums; font-weight:{{ $destination ? '600' : '400' }}">
-                            {{ number_format($sysQty, 0, ',', '.') }}
-                        </td>
-                        <td style="padding:8px 12px; text-align:right">
-                            <input type="number" name="details[{{ $i }}][actual_qty]"
-                                   min="0" step="0.001" placeholder="—"
-                                   class="kk-qty-input {{ $destination ? 'kk-qty-blue' : '' }}"
-                                   :disabled="!isVisible({{ $product->id }}, {{ Js::from($product->name) }})">
-                        </td>
-                    </tr>
-                    @endforeach
+                    <template x-for="(row, i) in rows" :key="row.id">
+                        <tr class="group/row kk-row" style="border-top:1px solid var(--surface-border)">
+                            <td style="padding:10px 16px">
+                                <span class="kk-row-num" x-text="i + 1"></span>
+                            </td>
+
+                            {{-- Product picker (command palette trigger) --}}
+                            <td style="padding:10px 12px">
+                                <input type="hidden" :name="`details[${i}][product_id]`" :value="row.product_id">
+                                <button type="button" @click="openPalette(row)"
+                                        class="create-table-select w-full flex items-center justify-between gap-2 text-left">
+                                    <span class="truncate flex-1"
+                                          :style="row.product_id ? 'color:var(--text-primary)' : 'color:var(--text-muted)'"
+                                          x-text="row.product_id && productOf(row) ? productOf(row).name : 'Chọn sản phẩm...'">
+                                    </span>
+                                    <i class="bi bi-search flex-shrink-0" style="font-size:11px; color:var(--text-muted); opacity:.5"></i>
+                                </button>
+                            </td>
+
+                            <td style="padding:10px 12px; color:var(--text-secondary); font-size:13px"
+                                x-text="row.product_id && productOf(row) ? productOf(row).unitName : '—'"></td>
+
+                            <td style="padding:10px 12px; text-align:right; font-size:13.5px; font-variant-numeric:tabular-nums;
+                                       color:{{ $destination ? '#2563eb' : 'var(--text-secondary)' }}; font-weight:{{ $destination ? '600' : '400' }}">
+                                <input type="hidden" :name="`details[${i}][system_qty]`" :value="row.product_id && productOf(row) ? productOf(row).systemQty : 0">
+                                <span x-text="row.product_id && productOf(row) ? formatQty(productOf(row).systemQty) : '—'"></span>
+                            </td>
+
+                            <td style="padding:8px 12px; text-align:right">
+                                <input type="number" :name="`details[${i}][actual_qty]`" x-model="row.actual_qty"
+                                       min="0" step="0.001" placeholder="—" :disabled="!row.product_id"
+                                       class="kk-qty-input {{ $destination ? 'kk-qty-blue' : '' }}">
+                            </td>
+
+                            <td style="padding:10px 12px; text-align:center">
+                                <button type="button" @click="removeRow(i)" class="create-delete-btn">
+                                    <i class="bi bi-x" style="font-size:14px; line-height:1"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </template>
                 </tbody>
             </table>
         </div>
 
-        @if($products->isEmpty())
-        <div style="padding:48px 20px; text-align:center; color:var(--text-muted)">
+        <div x-show="rows.length === 0" style="padding:48px 20px; text-align:center; color:var(--text-muted)">
             <i class="ph ph-package" style="font-size:40px; display:block; margin-bottom:10px; opacity:.4"></i>
-            <p style="font-size:14px">Chưa có sản phẩm nào được xuất đến kho này.</p>
-            <p style="font-size:12px; margin-top:4px">Tạo phiếu xuất kho trước khi kiểm kê.</p>
+            <p style="font-size:14px">Chưa có sản phẩm nào trong phiếu kiểm kê.</p>
+            <p style="font-size:12px; margin-top:4px">Bấm "Thêm dòng" để chọn sản phẩm.</p>
         </div>
-        @endif
+    </div>
+
+    {{-- Command Palette --}}
+    <div x-show="palette.open"
+         @keydown.escape.window="if(palette.open) { closePalette(); $event.stopPropagation(); }"
+         @keydown.arrow-down.window.prevent="if(palette.open) paletteMoveDown()"
+         @keydown.arrow-up.window.prevent="if(palette.open) paletteMoveUp()"
+         @keydown.enter.window.prevent="if(palette.open) paletteConfirm()"
+         class="cp-overlay" style="display:none">
+
+        <div class="cp-backdrop" @click="closePalette()"></div>
+
+        <div class="cp-panel">
+            {{-- Search --}}
+            <div class="cp-searchbar">
+                <i class="bi bi-search"></i>
+                <input id="cp-search" class="cp-search-input"
+                       type="text" autocomplete="off"
+                       placeholder="Tìm theo tên, SKU, danh mục..."
+                       x-model="palette.search"
+                       @input="filterPalette()">
+                <span class="cp-kbd">ESC</span>
+            </div>
+
+            {{-- Results --}}
+            <div id="cp-list" class="cp-list">
+                <template x-if="palette.results.length === 0">
+                    <div class="cp-empty">
+                        <i class="bi bi-search"></i>
+                        Không tìm thấy sản phẩm
+                    </div>
+                </template>
+                <template x-for="(p, idx) in palette.results" :key="p.id">
+                    <button type="button" class="cp-item"
+                            :class="palette.focusIdx === idx ? 'cp-focused' : ''"
+                            @click="selectFromPalette(p)"
+                            @mouseenter="palette.focusIdx = idx">
+                        <div class="cp-item-icon">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                        <div class="cp-item-body">
+                            <div class="cp-item-top">
+                                <span class="cp-item-name" x-text="p.name"></span>
+                                <span class="cp-item-sku" x-show="p.sku" x-text="p.sku"></span>
+                            </div>
+                            <div class="cp-item-cat" x-show="p.category" x-text="p.category"></div>
+                        </div>
+                        <div class="cp-item-stock">
+                            <div class="cp-item-qty" x-text="formatQty(p.systemQty)"></div>
+                            <div class="cp-item-unit" x-text="p.unitName"></div>
+                        </div>
+                    </button>
+                </template>
+            </div>
+
+            {{-- Footer --}}
+            <div class="cp-footer">
+                <span class="cp-count"><span x-text="palette.results.length"></span> sản phẩm</span>
+                <div class="cp-hints">
+                    <span class="cp-hint"><kbd>↑↓</kbd> di chuyển</span>
+                    <span class="cp-hint"><kbd>↵</kbd> chọn</span>
+                    <span class="cp-hint"><kbd>ESC</kbd> đóng</span>
+                </div>
+            </div>
+        </div>
     </div>
 
 </form>
@@ -231,6 +404,12 @@
     border-bottom:1px solid var(--surface-border);
 }
 .create-accent-bar { width:3px; height:16px; border-radius:2px; flex-shrink:0; }
+.btn-add-row {
+    font-size:12px; font-weight:600; padding:5px 12px; border-radius:7px;
+    background:rgba(124,58,237,.08); color:#7c3aed; border:1px solid rgba(124,58,237,.2);
+    cursor:pointer; transition:background .15s; display:inline-flex; align-items:center; gap:5px;
+}
+.btn-add-row:hover { background:rgba(124,58,237,.15); }
 .kk-scope-btn { cursor:pointer; }
 .kk-scope-btn span {
     display:inline-flex; align-items:center; gap:5px;
@@ -262,40 +441,27 @@
     border-color:#7c3aed; background:rgba(124,58,237,0.04);
     color:#7c3aed; font-weight:600;
 }
+.kk-qty-input:disabled { opacity:.5; cursor:not-allowed; }
 .kk-qty-blue:focus { border-color:#2563eb !important; }
 .kk-qty-blue:not(:placeholder-shown) {
     border-color:#2563eb !important; background:rgba(37,99,235,0.04) !important;
     color:#2563eb !important;
 }
+.create-table-select {
+    width:100%; background:transparent; border:none; border-bottom:1.5px solid var(--surface-border);
+    color:var(--text-primary); font-size:13.5px; padding:4px 2px 5px; outline:none;
+    transition:border-color .15s; border-radius:0; cursor:pointer; min-height:29px;
+}
+.create-table-select:focus { border-bottom-color:#7c3aed; }
+.dark .create-table-select { background:transparent !important; border-color:var(--surface-border) !important; color:var(--text-primary) !important; }
+.create-delete-btn {
+    width:24px; height:24px; border-radius:6px; border:none; display:flex;
+    align-items:center; justify-content:center; background:transparent; color:var(--text-muted);
+    cursor:pointer; opacity:0; transition:opacity .15s, background .15s, color .15s; margin:0 auto;
+}
+.kk-row:hover .create-delete-btn { opacity:1; }
+.create-delete-btn:hover { background:#fee2e2; color:#dc2626; }
+.dark .create-delete-btn:hover { background:rgba(220,38,38,.2); }
 </style>
 
-@php
-$productCategoryMap = $products->mapWithKeys(fn($p) => [
-    $p->id => [
-        'rootId' => $p->category?->getRootId(),
-        'name'   => $p->name,
-        'sku'    => $p->sku ?? '',
-    ]
-]);
-@endphp
-<script>
-const productCategoryMap = {!! json_encode($productCategoryMap) !!};
-
-function stocktakeForm() {
-    return {
-        selectedCategoryId: '{{ old('category_id', '') }}',
-        search: '',
-        isVisible(productId, productName) {
-            const p = productCategoryMap[productId];
-            const matchesScope = this.selectedCategoryId === '' ||
-                p?.rootId == this.selectedCategoryId;
-            const q = this.search.toLowerCase();
-            const matchesSearch = q === '' ||
-                productName.toLowerCase().includes(q) ||
-                (p?.sku ?? '').toLowerCase().includes(q);
-            return matchesScope && matchesSearch;
-        },
-    };
-}
-</script>
 @endsection

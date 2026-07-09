@@ -14,7 +14,7 @@ class RolesPermissionsSeeder extends Seeder
 
         $allPermissions = [
             'view-categories', 'create-categories', 'edit-categories', 'delete-categories',
-            'view-products', 'create-products', 'edit-products', 'delete-products',
+            'view-products', 'create-products', 'edit-products', 'delete-products', 'export-products',
             'view-units', 'create-units', 'edit-units', 'delete-units',
             'view-suppliers', 'create-suppliers', 'edit-suppliers', 'delete-suppliers',
             'view-transactions', 'create-transactions', 'edit-transactions', 'delete-transactions',
@@ -35,7 +35,7 @@ class RolesPermissionsSeeder extends Seeder
             'admin' => $allPermissions,
 
             'manager' => [
-                'view-categories', 'view-products', 'view-units', 'view-suppliers',
+                'view-categories', 'view-products', 'export-products', 'view-units', 'view-suppliers',
                 'manage-destinations',
                 'view-transactions', 'approve-transactions', 'reject-transactions', 'print-transactions',
                 'view-stocktakes', 'approve-stocktakes', 'reject-stocktakes',
@@ -47,7 +47,7 @@ class RolesPermissionsSeeder extends Seeder
 
             'accountant' => [
                 'view-categories',
-                'view-products', 'create-products', 'edit-products',
+                'view-products', 'create-products', 'edit-products', 'export-products',
                 'view-units', 'create-units', 'edit-units',
                 'view-suppliers', 'create-suppliers', 'edit-suppliers',
                 'view-transactions', 'create-transactions', 'edit-transactions', 'print-transactions',
@@ -58,7 +58,7 @@ class RolesPermissionsSeeder extends Seeder
             ],
 
             'supervisor' => [
-                'view-categories', 'view-products', 'view-units', 'view-suppliers',
+                'view-categories', 'view-products', 'export-products', 'view-units', 'view-suppliers',
                 'view-transactions', 'print-transactions',
                 'view-stocktakes',
                 'view-inventory', 'export-inventory',

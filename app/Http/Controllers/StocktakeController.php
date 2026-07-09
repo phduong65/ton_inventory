@@ -62,15 +62,31 @@ class StocktakeController extends Controller
                 ->whereIn('id', $systemQtys->isEmpty() ? [0] : $systemQtys->keys())
                 ->orderBy('name')
                 ->get()
-                ->each(fn ($p) => $p->destination_qty = (float) ($systemQtys->get($p->id, 0)));
+                ->each(fn ($p) => $p->system_qty = (float) ($systemQtys->get($p->id, 0)));
 
             $rootCategories = collect();
         } else {
             $rootCategories = Category::roots()->with('children.children')->get();
-            $products       = Product::active()->with(['inventory', 'category.parent.parent'])->orderBy('name')->get();
+            $products       = Product::active()
+                ->with(['inventory', 'category.parent.parent', 'unit'])
+                ->orderBy('name')
+                ->get()
+                ->each(fn ($p) => $p->system_qty = (float) ($p->inventory?->quantity ?? 0));
         }
 
-        return view('stocktakes.create', compact('products', 'rootCategories', 'destination'));
+        // Dữ liệu sản phẩm nhúng vào JS cho command palette chọn sản phẩm kiểm kê
+        $productsData = $products->mapWithKeys(fn ($p) => [
+            $p->id => [
+                'name'      => $p->name,
+                'sku'       => $p->sku ?? '',
+                'category'  => $p->category?->name ?? '',
+                'rootId'    => $p->category?->getRootId(),
+                'unitName'  => $p->unit?->name ?? '',
+                'systemQty' => $p->system_qty,
+            ],
+        ]);
+
+        return view('stocktakes.create', compact('productsData', 'rootCategories', 'destination'));
     }
 
     public function store(StoreStocktakeRequest $request)

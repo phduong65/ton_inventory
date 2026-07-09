@@ -22,6 +22,8 @@ class UpdateProductRequest extends FormRequest
             'min_stock'                  => ['nullable', 'numeric', 'min:0'],
             'description'                => ['nullable', 'string'],
             'status'                     => ['required', 'in:active,inactive'],
+            'image'                      => ['nullable', 'image', 'max:2048'],
+            'remove_image'               => ['nullable', 'boolean'],
             'conversions'                => ['nullable', 'array'],
             'conversions.*.unit_id'      => ['required_with:conversions', 'exists:units,id'],
             'conversions.*.factor'       => ['required_with:conversions', 'numeric', 'min:0.0001'],

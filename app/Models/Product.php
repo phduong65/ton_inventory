@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
 {
@@ -15,12 +16,19 @@ class Product extends Model
 
     protected $fillable = [
         'category_id', 'unit_id', 'sku', 'barcode', 'name',
-        'default_price', 'min_stock', 'description', 'status',
+        'default_price', 'min_stock', 'description', 'status', 'image',
     ];
 
     protected $casts = [
         'min_stock' => 'float',
     ];
+
+    protected $appends = ['image_url'];
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image ? Storage::disk('public')->url($this->image) : null;
+    }
 
     public function isBelowMinStock(): bool
     {

@@ -125,7 +125,6 @@ $statusLabel = match($stocktake->status) {
 
         <div class="px-4 py-3 flex items-center gap-3" style="border-bottom:1px solid var(--surface-border)">
             <div class="relative flex-1">
-                <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-sm pointer-events-none" style="color:var(--text-muted)"></i>
                 <input x-model="search" type="text" placeholder="Tìm sản phẩm, SKU..."
                        class="form-input pl-9 w-full text-sm">
             </div>
@@ -173,7 +172,7 @@ $statusLabel = match($stocktake->status) {
                             '{{ strtolower($detail->product?->name ?? '') }}'.includes(search.toLowerCase()) ||
                             '{{ strtolower($detail->product?->sku ?? '') }}'.includes(search.toLowerCase())">
                         <td class="px-4 py-3 text-xs tabular-nums" style="color:var(--text-muted)">{{ $i + 1 }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 whitespace-normal break-words max-w-[220px]">
                             <span class="font-medium" style="color:var(--text-primary)">{{ $detail->product?->name ?? '—' }}</span>
                             @if($detail->product?->sku)
                             <span class="ml-1.5 text-xs font-mono" style="color:var(--text-muted)">{{ $detail->product->sku }}</span>
@@ -204,7 +203,7 @@ $statusLabel = match($stocktake->status) {
          x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
          class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
         <div class="absolute inset-0" style="background:rgba(0,0,0,0.45);backdrop-filter:blur(3px)" @click="open = false"></div>
-        <div class="modal-panel relative w-full max-w-md p-5"
+        <div class="modal-panel relative max-w-[min(28rem,98vw)] max-h-[92vh] overflow-y-auto p-5"
              x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95 translate-y-2" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
             <div class="flex items-center gap-2.5 mb-4">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(239,68,68,0.10)">

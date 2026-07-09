@@ -131,7 +131,7 @@
          style="display:none">
         <div class="absolute inset-0" style="background:rgba(0,0,0,0.45);backdrop-filter:blur(3px)"
              @click="openCreate = false"></div>
-        <div class="modal-panel relative w-full max-w-md p-6"
+        <div class="modal-panel relative max-w-[min(28rem,98vw)] max-h-[92vh] overflow-y-auto p-6"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95 translate-y-2"
              x-transition:enter-end="opacity-100 scale-100 translate-y-0">
@@ -210,7 +210,7 @@
          style="display:none">
         <div class="absolute inset-0" style="background:rgba(0,0,0,0.45);backdrop-filter:blur(3px)"
              @click="openEdit = false"></div>
-        <div class="modal-panel relative w-full max-w-md p-6"
+        <div class="modal-panel relative max-w-[min(28rem,98vw)] max-h-[92vh] overflow-y-auto p-6"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95 translate-y-2"
              x-transition:enter-end="opacity-100 scale-100 translate-y-0">

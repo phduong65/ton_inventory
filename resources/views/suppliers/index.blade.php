@@ -11,7 +11,6 @@
     <div class="flex items-center justify-between mb-5">
         <form method="GET" class="flex gap-2">
             <div class="relative">
-                <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-sm" style="color:var(--text-muted)"></i>
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Tìm tên, mã, điện thoại..."
                        class="form-input pl-9 w-64 h-9 text-sm">
@@ -121,7 +120,7 @@
          x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
          class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
         <div class="absolute inset-0" style="background:rgba(0,0,0,0.45);backdrop-filter:blur(3px)" @click="openCreate = false"></div>
-        <div class="modal-panel relative w-full max-w-lg p-6"
+        <div class="modal-panel relative max-w-[min(32rem,98vw)] max-h-[92vh] overflow-y-auto p-6"
              x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95 translate-y-2" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
             <div class="flex items-center justify-between mb-5">
                 <div class="flex items-center gap-2.5">
@@ -180,7 +179,7 @@
          x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
          class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
         <div class="absolute inset-0" style="background:rgba(0,0,0,0.45);backdrop-filter:blur(3px)" @click="openEdit = false"></div>
-        <div class="modal-panel relative w-full max-w-lg p-6"
+        <div class="modal-panel relative max-w-[min(32rem,98vw)] max-h-[92vh] overflow-y-auto p-6"
              x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95 translate-y-2" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
             <div class="flex items-center justify-between mb-5">
                 <div class="flex items-center gap-2.5">

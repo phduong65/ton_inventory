@@ -44,16 +44,16 @@
             <a href="{{ route('inventory.export', request()->query()) }}"
                class="h-9 px-4 inline-flex items-center gap-1.5 text-sm font-medium text-white rounded-xl transition-colors"
                style="background:#16a34a" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">
-                <i class="ph ph-file-xls text-base"></i> Excel
+                <i class="ph ph-file-xls text-xs"></i> Excel
             </a>
             @endcan
         </div>
     </form>
 
     {{-- Info bar --}}
-    <div class="px-5 py-2.5 flex items-center justify-between text-sm" style="background:rgba(16,185,129,0.06);border-bottom:1px solid var(--surface-border)">
+    <div class="px-5 py-2.5 flex items-center justify-between text-xs" style="background:rgba(16,185,129,0.06);border-bottom:1px solid var(--surface-border)">
         <div class="flex items-center gap-2" style="color:#059669">
-            <i class="ph ph-calendar-blank text-sm"></i>
+            <i class="ph ph-calendar-blank text-xs"></i>
             @if(request('destination_id'))
             <span>Lũy kế xuất đến {{ $activeDestination?->name }}</span>
             @elseif($asOf >= $today)
@@ -84,14 +84,14 @@
                 @forelse($rows as $item)
                 <tr class="border-t border-gray-50 dark:border-gray-700/60 hover:bg-gray-50/70 dark:hover:bg-white/[0.025] transition-colors">
                     <td class="px-5 py-2.5 font-mono text-xs" style="color:var(--text-muted)">{{ $item->product?->sku ?? '—' }}</td>
-                    <td class="px-5 py-2.5 font-medium text-sm" style="color:var(--text-primary)">{{ $item->product?->name }}</td>
+                    <td class="px-5 py-2.5 font-medium text-xs whitespace-normal break-words max-w-[220px]" style="color:var(--text-primary)">{{ $item->product?->name }}</td>
                     <td class="px-5 py-2.5 text-xs" style="color:var(--text-muted)">{{ $item->product?->category?->name ?? '—' }}</td>
                     <td class="px-5 py-2.5 text-xs" style="color:var(--text-muted)">{{ $item->product?->unit?->name ?? '—' }}</td>
-                    <td class="px-5 py-2.5 text-right font-medium tabular-nums text-sm" style="{{ $item->quantity > 0 ? 'color:var(--text-primary)' : 'color:var(--text-muted)' }}">
+                    <td class="px-5 py-2.5 text-right font-medium tabular-nums text-xs" style="{{ $item->quantity > 0 ? 'color:var(--text-primary)' : 'color:var(--text-muted)' }}">
                         {{ number_format($item->quantity, 0, ',', '.') }}
                     </td>
                     <td class="px-5 py-2.5 text-right text-xs tabular-nums" style="color:var(--text-muted)">{{ number_format($item->average_cost, 0, ',', '.') }}đ</td>
-                    <td class="px-5 py-2.5 text-right text-sm font-medium tabular-nums" style="color:var(--text-primary)">
+                    <td class="px-5 py-2.5 text-right text-xs font-medium tabular-nums" style="color:var(--text-primary)">
                         {{ number_format($item->quantity * $item->average_cost, 0, ',', '.') }}đ
                     </td>
                 </tr>
@@ -99,7 +99,7 @@
                 <tr>
                     <td colspan="7" class="px-5 py-16 text-center">
                         <i class="ph ph-archive text-3xl block mb-2" style="color:var(--text-muted);opacity:.35"></i>
-                        <p class="text-sm" style="color:var(--text-muted)">Không có dữ liệu tồn kho tại thời điểm này</p>
+                        <p class="text-xs" style="color:var(--text-muted)">Không có dữ liệu tồn kho tại thời điểm này</p>
                     </td>
                 </tr>
                 @endforelse
@@ -107,12 +107,12 @@
             @if($rows->count())
             <tfoot>
                 <tr style="background:var(--surface-bg);border-top:2px solid var(--surface-border)">
-                    <td colspan="4" class="px-5 py-3 text-sm font-semibold" style="color:var(--text-secondary)">
+                    <td colspan="4" class="px-5 py-3 text-xs font-semibold" style="color:var(--text-secondary)">
                         Tổng cộng ({{ number_format($rows->count()) }} sản phẩm)
                     </td>
-                    <td class="px-5 py-3 text-right text-sm font-bold tabular-nums" style="color:var(--text-primary)">{{ number_format($rows->sum('quantity'), 0, ',', '.') }}</td>
+                    <td class="px-5 py-3 text-right text-xs font-bold tabular-nums" style="color:var(--text-primary)">{{ number_format($rows->sum('quantity'), 0, ',', '.') }}</td>
                     <td></td>
-                    <td class="px-5 py-3 text-right text-sm font-bold tabular-nums" style="color:#16a34a">{{ number_format($totalValue, 0, ',', '.') }}đ</td>
+                    <td class="px-5 py-3 text-right text-xs font-bold tabular-nums" style="color:#16a34a">{{ number_format($totalValue, 0, ',', '.') }}đ</td>
                 </tr>
             </tfoot>
             @endif

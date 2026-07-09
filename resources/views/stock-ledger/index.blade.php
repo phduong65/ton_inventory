@@ -84,7 +84,7 @@
                         <span class="text-xs" style="color:var(--text-muted)">Kiểm kê</span>
                         @endif
                     </td>
-                    <td class="px-5 py-3.5 text-sm font-medium" style="color:var(--text-primary)">{{ $row->product?->name }}</td>
+                    <td class="px-5 py-3.5 text-sm font-medium whitespace-normal break-words max-w-[220px]" style="color:var(--text-primary)">{{ $row->product?->name }}</td>
                     <td class="px-5 py-3.5 text-center">
                         @php
                         $badgeClass = match($row->type) {

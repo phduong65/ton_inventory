@@ -3,7 +3,7 @@
      x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
      class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
     <div class="absolute inset-0" style="background:rgba(0,0,0,0.45);backdrop-filter:blur(3px)" @click="openCreate = false"></div>
-    <div class="modal-panel relative w-full max-w-xl max-h-[92vh] overflow-y-auto"
+    <div class="modal-panel relative max-w-[min(36rem,98vw)] max-h-[92vh] overflow-y-auto"
          x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95 translate-y-2" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
         <div class="flex items-center justify-between p-5" style="border-bottom:1px solid var(--surface-border)">
             <div class="flex items-center gap-2.5">
@@ -16,13 +16,36 @@
                 <i class="ph ph-x text-base"></i>
             </button>
         </div>
-        <form action="{{ route('products.store') }}" method="POST"
+        <form action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data"
               x-data="{
                   convRows: [],
-                  selectedUnitId: '{{ old('unit_id', '') }}'
+                  selectedUnitId: '{{ old('unit_id', '') }}',
+                  imagePreview: null,
+                  onImageChange(e) {
+                      const file = e.target.files[0];
+                      if (!file) { this.imagePreview = null; return; }
+                      const reader = new FileReader();
+                      reader.onload = ev => { this.imagePreview = ev.target.result; };
+                      reader.readAsDataURL(file);
+                  }
               }"
               class="p-5 space-y-4">
             @csrf
+            <div>
+                <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color:var(--text-muted)">Hình ảnh</label>
+                <div class="flex items-center gap-3">
+                    <div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center" style="background:var(--surface-bg);border:1px solid var(--surface-border)">
+                        <template x-if="imagePreview">
+                            <img :src="imagePreview" class="w-full h-full object-cover">
+                        </template>
+                        <template x-if="!imagePreview">
+                            <i class="ph ph-image text-xl" style="color:var(--text-muted)"></i>
+                        </template>
+                    </div>
+                    <input type="file" name="image" accept="image/*" @change="onImageChange" class="form-input flex-1 text-sm">
+                </div>
+                @error('image')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+            </div>
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color:var(--text-muted)">SKU <span class="text-red-500 normal-case">*</span></label>

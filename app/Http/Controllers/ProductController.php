@@ -4,16 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use App\Exports\ProductImportTemplateExport;
+use App\Exports\ProductsExport;
 use App\Imports\ProductsImport;
+use App\Imports\ProductsImportPreview;
 use App\Models\Category;
 use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Unit;
 use App\Models\UnitConversion;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProductController extends Controller
 {
@@ -44,6 +50,10 @@ class ProductController extends Controller
         $conversions = $data['conversions'] ?? [];
         unset($data['conversions']);
 
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('products', 'public');
+        }
+
         $product = Product::create($data);
 
         Inventory::create(['product_id' => $product->id, 'quantity' => 0, 'average_cost' => 0]);
@@ -62,6 +72,18 @@ class ProductController extends Controller
         $data = $request->validated();
         $conversions = $data['conversions'] ?? [];
         unset($data['conversions']);
+        $removeImage = (bool) ($data['remove_image'] ?? false);
+        unset($data['remove_image']);
+
+        if ($request->hasFile('image')) {
+            if ($product->image) {
+                Storage::disk('public')->delete($product->image);
+            }
+            $data['image'] = $request->file('image')->store('products', 'public');
+        } elseif ($removeImage && $product->image) {
+            Storage::disk('public')->delete($product->image);
+            $data['image'] = null;
+        }
 
         $before = $product->toArray();
         $product->update($data);
@@ -121,16 +143,52 @@ class ProductController extends Controller
         $import = new ProductsImport();
         Excel::import($import, $request->file('file'));
 
-        $msg = "Đã import {$import->imported} sản phẩm.";
+        $msg = "Đã import: {$import->imported} tạo mới, {$import->updated} cập nhật.";
         if ($import->skipped > 0) {
-            $msg .= " Bỏ qua {$import->skipped} dòng (trùng SKU hoặc thiếu tên).";
+            $msg .= " Bỏ qua {$import->skipped} dòng (trùng SKU trong file, thiếu tên, hoặc thuộc sản phẩm đã xóa).";
         }
 
         activity()
             ->causedBy(auth()->user())
-            ->withProperties(['imported' => $import->imported, 'skipped' => $import->skipped])
+            ->withProperties(['imported' => $import->imported, 'updated' => $import->updated, 'skipped' => $import->skipped])
             ->log('imported');
 
         return redirect()->route('products.index')->with('success', $msg);
+    }
+
+    public function importPreview(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:5120'],
+        ]);
+
+        $preview = new ProductsImportPreview();
+        Excel::import($preview, $request->file('file'));
+
+        return response()->json([
+            'total'     => $preview->total,
+            'valid'     => $preview->valid,
+            'update'    => $preview->update,
+            'skipped'   => $preview->skipped,
+            'truncated' => $preview->truncated,
+            'rows'      => $preview->rows,
+        ]);
+    }
+
+    public function importTemplate(): BinaryFileResponse
+    {
+        return Excel::download(new ProductImportTemplateExport(), 'mau-import-san-pham.xlsx');
+    }
+
+    public function export(Request $request): BinaryFileResponse
+    {
+        $this->authorize('export-products');
+
+        $filename = 'san-pham-' . now()->format('Ymd-His') . '.xlsx';
+
+        return Excel::download(
+            new ProductsExport($request->only(['search', 'category_id', 'status'])),
+            $filename
+        );
     }
 }

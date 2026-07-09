@@ -10,7 +10,6 @@
     {{-- Search bar --}}
     <form method="GET" action="{{ route('search.index') }}" class="flex gap-2">
         <div class="relative flex-1">
-            <i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-base" style="color:var(--text-muted)"></i>
             <input type="text" name="q" value="{{ $q }}"
                    class="form-input pl-10 w-full h-10 text-sm"
                    placeholder="Tìm phiếu, sản phẩm, nhà cung cấp..." autofocus>

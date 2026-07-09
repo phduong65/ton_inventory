@@ -57,6 +57,15 @@ Route::middleware('auth')->group(function () {
     Route::post('products/import', [ProductController::class, 'import'])
         ->name('products.import')->middleware('can:create-products');
 
+    Route::post('products/import/preview', [ProductController::class, 'importPreview'])
+        ->name('products.import-preview')->middleware('can:create-products');
+
+    Route::get('products/import-template', [ProductController::class, 'importTemplate'])
+        ->name('products.import-template')->middleware('can:create-products');
+
+    Route::get('products/export', [ProductController::class, 'export'])
+        ->name('products.export')->middleware('can:export-products');
+
     // Nhà cung cấp
     Route::resource('suppliers', SupplierController::class)
         ->except(['create', 'edit', 'show'])

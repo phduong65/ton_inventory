@@ -363,7 +363,7 @@ $statusLabel = match($transaction->status) {
              x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
              class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
             <div class="absolute inset-0" style="background:rgba(0,0,0,0.45);backdrop-filter:blur(3px)" @click="open = false"></div>
-            <div class="modal-panel relative w-full max-w-md p-5"
+            <div class="modal-panel relative max-w-[min(28rem,98vw)] max-h-[92vh] overflow-y-auto p-5"
                  x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95 translate-y-2" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
                 <div class="flex items-center gap-2.5 mb-4">
                     <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(239,68,68,0.10)">
